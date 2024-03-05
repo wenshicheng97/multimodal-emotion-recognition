@@ -1,0 +1,32 @@
+method: 'grid'
+
+metric: 
+    name: 'val_loss'
+    goal: 'minimize'   
+
+parameters: 
+    seed:
+      value: 42
+    segment:
+      value: 12
+    hidden_sizes: 
+      values: [[512], [768], [768, 512]]
+
+    window:
+      value: 10
+    stride:
+      value: 5
+
+    lr: 
+      values: [3e-4, 5e-4, 3e-5, 1e-3]
+    weight_decay: 
+      value: 1e-5
+  
+    batch_size:
+      value: 16
+
+    devices:
+      value: 4
+    
+    epoch:
+      value: 1
