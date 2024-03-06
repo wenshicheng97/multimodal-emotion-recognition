@@ -10,7 +10,7 @@ def face_to_batch(face_path, audio_path, target_folder):
     face_path = Path(face_path)
     audio_path = Path(audio_path)
     target_folder = Path(target_folder)
-    target_folder.mkdir(exist_ok=True)
+    target_folder.mkdir(exist_ok=True, parents=True)
     count = 0
 
     for index, file_path in enumerate(face_path.iterdir()):
@@ -29,7 +29,6 @@ def face_to_batch(face_path, audio_path, target_folder):
         
         if frame_length <= 10:
             print(f'''{file_path.stem} has less than 10 frames''')
-            continue
 
         audio_array = np.load(audio_path / f'''{file_path.stem}.npz''')['audio']
         diff = gaze_angle.shape[0] - audio_array.shape[0]

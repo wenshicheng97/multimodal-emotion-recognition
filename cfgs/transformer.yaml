@@ -1,0 +1,55 @@
+method: 'grid'
+
+metric: 
+    name: 'val_accuracy'
+    goal: 'maximize'   
+
+parameters: 
+    seed:
+      value: 42
+    
+    frozen:
+      values: [True, False]
+
+    window:
+      value: 10
+    stride:
+      value: 5
+    
+
+    lr: 
+      values: [3e-4, 5e-4, 3e-5, 1e-3]
+    weight_decay: 
+      value: 1e-5
+  
+    # transformer parameters
+    d_model:
+      value: 512
+    n_head:
+      value: 16
+    d_hid:
+      value: 512
+    n_layers:
+      value: 24
+    n_labels:
+      value: 6
+    dropout:
+      value: 0.2
+    n_ctx:
+      value: 128
+    n_modalities:
+      value: 3
+    t_encode:
+      values: [True, False]
+    lstm_hid:
+      value: 128
+
+
+    batch_size:
+      value: 10
+
+    devices:
+      value: 4
+    
+    epoch:
+      value: 20

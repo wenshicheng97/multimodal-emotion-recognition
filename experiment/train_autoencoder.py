@@ -48,7 +48,7 @@ def train_autoencoder():
 
     wandb.finish()
 
-    Path(f'./sample/{args.feature}').mkdir(exist_ok=True)
+    Path(f'./sample/{args.feature}').mkdir(exist_ok=True, parents=True)
     torch.save(model.autoencoder.encoder, f'./pretrained_encoders/{args.feature}/lr{hparams.lr}_hidden{hparams.hidden_sizes}_encoder.pth')
 
 if __name__ == '__main__':

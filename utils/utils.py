@@ -23,10 +23,15 @@ def window_transform(batch, lengths, window_size, stride):
         transformed.append(torch.stack(transformed_sequence))
         seq_length.append(len(transformed_sequence))
 
+    # padded_transformed: (batch_size, max_seq_len, feature_size * window)
     padded_transformed = pad_sequence(transformed, batch_first=True, padding_value=0)
     seq_length = torch.tensor(seq_length, dtype=torch.int)
 
     return padded_transformed, seq_length
+
+def freeze(model):
+    for param in model.parameters():
+        param.requires_grad = False
 
 
 class CREMAD_Normalizer:

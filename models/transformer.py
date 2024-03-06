@@ -35,9 +35,10 @@ class MultiModalTransformer(nn.Module):
                  n_layers: int,
                  n_labels: int,
                  dropout: float = 0.5,
-                 max_seq_len: int = 512,
+                 n_ctx: int = 512,
                  n_modalities: int = 3,
-                 t_encode: bool = False):
+                 t_encode: bool = False,
+                 lstm_hid: int = 128):
         super().__init__()
         self.d_model = d_model
         self.n_modalities = n_modalities
@@ -45,7 +46,7 @@ class MultiModalTransformer(nn.Module):
         if not t_encode:
             self.pos_encoder = PositionalEncoding(d_model)
         else:
-            self.t_encoder = nn.Embedding(max_seq_len + 1, d_model, padding_idx=0)
+            self.t_encoder = nn.Embedding(n_ctx + 1, d_model, padding_idx=0)
         self.transformer_encoder = TransformerEncoder(TransformerEncoderLayer(d_model, 
                                                                               n_head, 
                                                                               d_hid, 
@@ -53,8 +54,8 @@ class MultiModalTransformer(nn.Module):
                                                                               batch_first=True),
                                                       n_layers)
         
-        self.lstm = nn.LSTM(input_size=d_hid, hidden_size=d_hid, batch_first=True, bidirectional=True)
-        self.linear = nn.Linear(d_hid * 2, n_labels)
+        self.lstm = nn.LSTM(input_size=d_hid, hidden_size=lstm_hid, batch_first=True, bidirectional=True)
+        self.linear = nn.Linear(lstm_hid * 2, n_labels)
         
     def forward(self, batch, attn_mask):
         """
@@ -80,7 +81,7 @@ class MultiModalTransformer(nn.Module):
         _, (hidden, _) = self.lstm(packed_out)
         hidden = torch.cat((hidden[-2], hidden[-1]), dim=1)
         out = F.relu(hidden)
-        out = self.linear(out)
+        out = self.linear(out) 
         return out
     
     @staticmethod

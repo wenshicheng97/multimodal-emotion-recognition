@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import lightning.pytorch as pl
-from model.autoencoder import *
+from models.autoencoder import *
 from utils.utils import *
 from utils.dataset import *
 
