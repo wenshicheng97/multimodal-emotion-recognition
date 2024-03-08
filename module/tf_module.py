@@ -8,7 +8,7 @@ from models.autoencoder import *
 from utils.utils import *
 from utils.dataset import *
 
-from torchmetrics import Accuracy, Precision, Recall, F1Score
+from torchmetrics import Accuracy, F1Score
 
 class TransformerModule(LightningModule):
     FEATURES = {
@@ -26,7 +26,7 @@ class TransformerModule(LightningModule):
                 weight_decay,
                 **kwargs):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=['normalizer'])
         
         self.window = window
         self.stride = stride
@@ -36,9 +36,13 @@ class TransformerModule(LightningModule):
         self.lr = lr
         self.weight_decay = weight_decay
 
-        self.encoders = nn.ModuleDict({'gaze_landmarks': torch.load(f"./pretrained_encoder/gaze_landmarks_encoder.pth"),
-                                       'face_landmarks': torch.load(f"./pretrained_encoder/face_landmarks_encoder.pth"),
-                                       'audio': torch.load(f"./pretrained_encoder/audio_encoder.pth")})
+        #self.encoders = nn.ModuleDict({'gaze_landmarks': torch.load(f"./pretrained_encoders/best/gaze_landmarks_encoder.pth"),
+        #                               'face_landmarks': torch.load(f"./pretrained_encoders/best/face_landmarks_encoder.pth"),
+        #                               'audio': torch.load(f"./pretrained_encoders/best/audio_encoder.pth")})
+
+        self.encoders = nn.ModuleDict({'gaze_landmarks': Encoder(112, [512]),
+                                        'face_landmarks': Encoder(136, [512]),
+                                        'audio': Encoder(128, [512])})
         
         # load from pretrained
         for feature in self.features:
@@ -53,9 +57,9 @@ class TransformerModule(LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), 
                                      lr=self.lr, 
                                      weight_decay=self.weight_decay)
-        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
-        #                                                        T_max=self.trainer.max_epochs) 
-        return [optimizer]
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
+                                                               T_max=self.trainer.max_epochs) 
+        return [optimizer], [scheduler]
     
     def forward(self, batch):
         bz = batch['audio'].size(0)
@@ -67,7 +71,7 @@ class TransformerModule(LightningModule):
             feature_batch = self.normalizer.minmax_normalize(feature_batch, feature)
 
             # do 1-d CNN
-            feature_transformed, new_seq_lengths = window_transform(feature_batch, seq_lengths, self.window, self.stride)
+            #feature_transformed, new_seq_lengths = window_transform(feature_batch, seq_lengths, self.window, self.stride)
             max_seq_length = feature_transformed.size(1)
             
             # feature_transformed: (batch_size, max_seq_len, feature_size * window)
@@ -78,6 +82,7 @@ class TransformerModule(LightningModule):
             
         #stacked_input: (batch_size, n_modalities, max_seq_len, hidden_size)
         stacked_input = torch.stack(stacked_input, dim=1)
+        
         range_tensor = torch.arange(0, max_seq_length).unsqueeze(0)
 
         attention_mask = (range_tensor >= new_seq_lengths.unsqueeze(1)).int().to(self.device)
@@ -85,27 +90,12 @@ class TransformerModule(LightningModule):
 
         return batch['label'], output
 
-
-    def on_train_start(self):
-        self.train_accuracy = Accuracy(task="multiclass", num_classes=6).to(self.device)
-        self.train_f1 = F1Score(task="multiclass", num_classes=6).to(self.device)
-
     
     def training_step(self, batch, batch_idx):
         y, y_hat = self(batch)
         loss = F.cross_entropy(y_hat, y, reduction='mean')
         self.log('train_loss', loss, on_epoch=True, sync_dist=True)
-        self.train_accuracy.update(y_hat, y)
-        self.train_f1.update(y_hat, y)
         return loss
-    
-    
-    def on_train_epoch_end(self):
-        self.log('train_accuracy', self.train_accuracy.compute(), on_epoch=True, sync_dist=True)
-        self.log('train_f1', self.train_f1.compute(), on_epoch=True, sync_dist=True)
-        self.train_accuracy.reset()
-        self.train_f1.reset()
-    
 
     def on_validation_start(self):
         self.val_accuracy = Accuracy(task="multiclass", num_classes=6).to(self.device)
@@ -141,13 +131,13 @@ if __name__ == '__main__':
                               n_layers=24,
                               n_labels=6,
                               dropout=0.2,
-                              n_positions=128,
+                              n_ctx=128,
                               n_modalities=3,
                               t_encode=True,
                               lstm_hid=128)
     
     trainer = pl.Trainer(accelerator = 'gpu',
-                         max_epochs=20, 
-                         devices=1, 
+                         max_epochs=1, 
+                         devices=4, 
                          strategy='ddp')
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)

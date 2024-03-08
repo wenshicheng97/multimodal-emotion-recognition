@@ -6,28 +6,26 @@ from pathlib import Path
 import numpy as np
 
 def cremad_collate_fn(batch):
-    seq_length = [item['seq_length'] for item in batch ]
-    gaze_angle = [item['gaze_angle'] for item in batch ]
-    gaze_landmarks = [item['gaze_landmarks'] for item in batch ]
-    face_landmarks = [item['face_landmarks'] for item in batch ]
-    audio = [item['audio'] for item in batch ]
-    labels = [item['label'] for item in batch ]
-
-    gaze_angle_padded = pad_sequence(gaze_angle, batch_first=True, padding_value=0)
-    gaze_landmarks_padded = pad_sequence(gaze_landmarks, batch_first=True, padding_value=0)
-    face_landmarks_padded = pad_sequence(face_landmarks, batch_first=True, padding_value=0)
-    audio_padded = pad_sequence(audio, batch_first=True, padding_value=0)
-
-    labels = torch.tensor(labels, dtype=torch.long)
-    seq_length = torch.tensor(seq_length, dtype=torch.int)
+    seq_length = [item['seq_length'] for item in batch]
+    gaze_angle = pad_sequence([item['gaze_angle'] for item in batch], batch_first=True)
+    gaze_landmarks = pad_sequence([item['gaze_landmarks'] for item in batch], batch_first=True)
+    face_landmarks = pad_sequence([item['face_landmarks'] for item in batch], batch_first=True)
+    spectrogram = pad_sequence([item['spectrogram'] for item in batch], batch_first=True)
+    audio = pad_sequence([item['audio'] for item in batch], batch_first=True)
+    au17 = pad_sequence([item['au17'] for item in batch], batch_first=True)
+    au18 = pad_sequence([item['au18'] for item in batch], batch_first=True)
+    label = torch.tensor([item['label'] for item in batch], dtype=torch.long)
 
     return {
-        'seq_length': seq_length,
-        'gaze_angle': gaze_angle_padded,
-        'gaze_landmarks': gaze_landmarks_padded,
-        'face_landmarks': face_landmarks_padded,
-        'audio': audio_padded,
-        'label': labels }
+        'seq_length': torch.tensor(seq_length, dtype=torch.long),
+        'gaze_angle': gaze_angle,
+        'gaze_landmarks': gaze_landmarks,
+        'face_landmarks': face_landmarks,
+        'spectrogram': spectrogram,
+        'audio': audio,
+        'au17': au17,
+        'au18': au18,
+        'label': label }
 
 
 class CREMADDataset(Dataset):
@@ -57,7 +55,10 @@ class CREMADDataset(Dataset):
         gaze_angle = torch.tensor(data_loaded['gaze_angle'], dtype=torch.float32)
         gaze_landmarks = torch.tensor(data_loaded['gaze_landmarks'], dtype=torch.float32)
         face_landmarks = torch.tensor(data_loaded['face_landmarks'], dtype=torch.float32)
+        spectrogram = torch.tensor(data_loaded['spectrogram'], dtype=torch.float32)
         audio = torch.tensor(data_loaded['audio'], dtype=torch.float32)
+        au17 = torch.tensor(data_loaded['au17'], dtype=torch.float32)
+        au18 = torch.tensor(data_loaded['au18'], dtype=torch.float32)
         
         label = self.emotion_dict[str(data_loaded['label'])]
         seq_length = gaze_angle.shape[0]
@@ -66,14 +67,17 @@ class CREMADDataset(Dataset):
             'gaze_angle': gaze_angle,
             'gaze_landmarks': gaze_landmarks,
             'face_landmarks': face_landmarks,
+            'spectrogram': spectrogram,
             'audio': audio,
+            'au17': au17,
+            'au18': au18,
             'label': label }
 
 
 
 def get_dataloader(data, batch_size):
     if data == 'cremad':
-        dataset = CREMADDataset('batch')
+        dataset = CREMADDataset('batch/batch_v4')
 
         train_size = int(0.8 * len(dataset))
         val_size = int(0.1 * len(dataset))
@@ -84,3 +88,17 @@ def get_dataloader(data, batch_size):
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=cremad_collate_fn)
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=cremad_collate_fn)
     return train_loader, val_loader, test_loader
+
+if __name__ == '__main__':
+    train_loader, val_loader, test_loader = get_dataloader('cremad', 5)
+    for batch in train_loader:
+        print('gaze_angle:', batch['gaze_angle'].shape)
+        print('gaze_landmarks:', batch['gaze_landmarks'].shape)
+        print('face_landmarks:', batch['face_landmarks'].shape)
+        print('spectrogram:', batch['spectrogram'].shape)
+        print('audio:', batch['audio'].shape)
+        print('au17:', batch['au17'].shape)
+        print('au18:', batch['au18'].shape)
+        print('label:', batch['label'].shape)
+        print('seq_length:', batch['seq_length'])
+        break

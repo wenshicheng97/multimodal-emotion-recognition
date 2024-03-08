@@ -19,14 +19,12 @@ def melspectrogram_process(dir_name, outputdir_name):
         np.savez(output_path, audio = data_trans, label = str(i))
 
 
-def hubert_extraction(model, audio_path):
+def audio_extraction(audio_path):
     waveform, sample_rate = torchaudio.load(audio_path)
     if sample_rate != 16000:
         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
         waveform = resampler(waveform)
-    with torch.inference_mode():
-        features = model.extract_features(waveform)
-    return features.detach().numpy()
+    return waveform.squeeze(0).numpy()
 
 
 if __name__ == '__main__':

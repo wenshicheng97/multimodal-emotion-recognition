@@ -3,34 +3,34 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import lightning.pytorch as pl
-from models.autoencoder import *
+from models.lstm import *
 from utils.utils import *
 from utils.dataset import *
 
-class AutoEncoderModule(LightningModule):
+from torchmetrics import Accuracy, F1Score
+
+class LSTMModule(LightningModule):
     FEATURES = {
         'gaze_angle': 2,
         'gaze_landmarks': 112,
         'face_landmarks': 136,
-        'audio': 128 }
+        'spectrogram': 128,
+        'au17': 17,
+        'au18': 18 }
     
-    def __init__(self, 
-                hidden_sizes, 
-                feature, 
-                window, 
-                stride, 
-                normalizer, 
+    def __init__(self,
+                feature,
+                hidden_size, 
+                output_size,
                 lr, 
                 weight_decay):
         super().__init__()
         self.save_hyperparameters(ignore=['normalizer'])
         feature_dim = self.FEATURES[feature]
-        input_dim = feature_dim * window
-        self.autoencoder = AutoEncoder(input_dim, hidden_sizes)
         self.feature = feature
-        self.window = window
-        self.stride = stride
-        self.normalizer = normalizer
+
+        self.lstm = LSTModal(feature_dim, output_size, hidden_size)
+
         self.lr = lr
         self.weight_decay = weight_decay
 
@@ -41,42 +41,40 @@ class AutoEncoderModule(LightningModule):
     
     def forward(self, batch):
         feature_batch = batch[self.feature]
-        bz = feature_batch.size(0)
+        label = batch['label']
+        
+        output = self.lstm(feature_batch)
 
-        feature_batch = self.normalizer.minmax_normalize(feature_batch, self.feature)
-        feature_transformed, seq_lengths = window_transform(feature_batch, batch['seq_length'], self.window, self.stride)
-
-        max_seq_length = feature_transformed.size(1)
-        range_tensor = torch.arange(0, max_seq_length).unsqueeze(0)
-
-        attention_mask = (range_tensor < seq_lengths.unsqueeze(1)).to(self.device)
-        attention_mask = attention_mask.int().unsqueeze(-1)
-
-        feature_transformed_reshaped = feature_transformed.view(bz * max_seq_length, -1)
-        reconstructed = self.autoencoder(feature_transformed_reshaped).view(bz, max_seq_length, -1)
-        reconstructed = reconstructed * attention_mask
-
-        return feature_transformed, reconstructed
+        return label, output
 
     
     def training_step(self, batch, batch_idx):
         y, y_hat = self(batch)
-        loss = F.mse_loss(y_hat, y, reduction='mean')
+        loss = F.cross_entropy(y_hat, y, reduction='mean')
         self.log('train_loss', loss, on_epoch=True, sync_dist=True)
         return loss
 
-    
+    def on_validation_start(self):
+        self.val_accuracy = Accuracy(task="multiclass", num_classes=6).to(self.device)
+        self.val_f1 = F1Score(task="multiclass", num_classes=6).to(self.device)
+
+
     def validation_step(self, batch, batch_idx):
-        (y, y_hat) = self(batch)
-        loss = F.mse_loss(y_hat, y, reduction='mean')
-        self.log('val_loss', loss, on_epoch=True, sync_dist=True)
-        return loss
+        y, y_hat = self(batch)
+        self.val_accuracy.update(y_hat, y)
+        self.val_f1.update(y_hat, y)
+
+    def on_validation_epoch_end(self):
+        self.log('val_accuracy', self.val_accuracy.compute(), on_epoch=True, sync_dist=True)
+        self.log('val_f1', self.val_f1.compute(), on_epoch=True, sync_dist=True)
+        self.val_accuracy.reset()
+        self.val_f1.reset()
 
 
 if __name__ == '__main__':
     train_loader, val_loader, test_loader = get_dataloader('cremad', 5)
     normalizer = CREMAD_Normalizer(train_loader)
-    model = AutoEncoderModule(hidden_sizes=[512], 
+    model = LSTMModule(hidden_sizes=[512], 
                         feature='gaze_angle', 
                         window=5, 
                         stride=2, 

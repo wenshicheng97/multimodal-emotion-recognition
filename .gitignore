@@ -7,5 +7,6 @@ pretrained_encoder/
 wandb/
 script/
 slurm/
+data/
 
 playground.py

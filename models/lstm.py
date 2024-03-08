@@ -18,8 +18,8 @@ class LSTModel(nn.Module):
     self.fc2 = nn.Linear(hidden_size, output_size)
 
 
-  def forward(self, batch, length):
-
+  def forward(self, batch):
+    length = batch.size(1)
     packed_out = pack_padded_sequence(batch, length.cpu(), batch_first=True, enforce_sorted=False)
     _, (hidden, _) = self.lstm(packed_out)
     hidden = torch.cat((hidden[-2], hidden[-1]), dim=1)
