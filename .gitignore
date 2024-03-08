@@ -1,3 +1,11 @@
-*__pycache__
+*__pycache__*
+batch/
+emotion-recognition/
+lightning_logs/
+sample/
+pretrained_encoder/
+wandb/
+script/
+slurm/
 
 playground.py

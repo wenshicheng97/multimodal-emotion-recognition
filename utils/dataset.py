@@ -73,7 +73,7 @@ class CREMADDataset(Dataset):
 
 def get_dataloader(data, batch_size):
     if data == 'cremad':
-        dataset = CREMADDataset('batch/batch_v3')
+        dataset = CREMADDataset('batch')
 
         train_size = int(0.8 * len(dataset))
         val_size = int(0.1 * len(dataset))

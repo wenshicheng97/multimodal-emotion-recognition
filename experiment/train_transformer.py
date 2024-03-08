@@ -34,10 +34,11 @@ def train_transformer():
                               n_layers=hparams.n_layers,
                               n_labels=hparams.n_labels,
                               dropout=hparams.dropout,
-                              n_ctx=hparams.n_ctx,
+                              n_positions=hparams.n_positions,
                               n_modalities=hparams.n_modalities,
                               t_encode=hparams.t_encode,
-                              lstm_hid=hparams.lstm_hid)
+                              lstm_hid=hparams.lstm_hid,
+                              use_cls=hparams.use_cls)
 
     # wandb name
     wandb_logger.experiment.name = f'transformer_lr{hparams.lr}_frozen{hparams.frozen}_t_encode{hparams.t_encode}'

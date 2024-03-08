@@ -9,7 +9,7 @@ parameters:
       value: 42
     
     frozen:
-      values: [True, False]
+      value: False
 
     window:
       value: 10
@@ -26,30 +26,35 @@ parameters:
     d_model:
       value: 512
     n_head:
-      value: 16
+      value: 8
     d_hid:
       value: 512
     n_layers:
-      value: 24
+      value: 8
     n_labels:
       value: 6
     dropout:
       value: 0.2
-    n_ctx:
+    n_positions:
       value: 128
     n_modalities:
       value: 3
     t_encode:
-      values: [True, False]
+      value: False
     lstm_hid:
       value: 128
+    use_cls:
+      values: [True, False]
 
 
     batch_size:
-      value: 10
+      value: 32
 
     devices:
-      value: 4
+      value: 1
     
     epoch:
-      value: 20
+      value: 100
+
+    ckpt:
+      value: 'ckpt-audio'
