@@ -29,7 +29,7 @@ class LSTMModule(LightningModule):
         feature_dim = self.FEATURES[feature]
         self.feature = feature
 
-        self.lstm = LSTModal(feature_dim, output_size, hidden_size)
+        self.lstm = LSTMModel(feature_dim, output_size, hidden_size)
 
         self.lr = lr
         self.weight_decay = weight_decay
@@ -43,7 +43,7 @@ class LSTMModule(LightningModule):
         feature_batch = batch[self.feature]
         label = batch['label']
         
-        output = self.lstm(feature_batch)
+        output = self.lstm(feature_batch, batch['seq_length'])
 
         return label, output
 

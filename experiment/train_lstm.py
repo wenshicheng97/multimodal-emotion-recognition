@@ -29,7 +29,7 @@ def train_lstm():
                        output_size=hparams.output_size,
                        feature=args.feature,
                        lr=hparams.lr,
-                       weight_dacay=hparams.weight_decay)
+                       weight_decay=hparams.weight_decay)
 
     # wandb name
     wandb_logger.experiment.name = f'transformer_lr{hparams.lr}'
