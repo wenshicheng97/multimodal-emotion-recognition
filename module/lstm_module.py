@@ -73,12 +73,10 @@ class LSTMModule(LightningModule):
 
 if __name__ == '__main__':
     train_loader, val_loader, test_loader = get_dataloader('cremad', 5)
-    normalizer = CREMAD_Normalizer(train_loader)
     model = LSTMModule(hidden_sizes=[512], 
-                        feature='gaze_angle', 
-                        window=5, 
-                        stride=2, 
-                        normalizer=normalizer, 
+                        feature='au17', 
+                        hidden_size=128, 
+                        output_size=6,
                         lr=0.001, 
                         weight_decay=0.0001)
     

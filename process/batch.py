@@ -4,10 +4,10 @@ import numpy as np
 from process.audio_preprocess import audio_extraction
 import torchaudio
 
-cremad_face_path = 'data/CREMA-D_openface'
-cremad_spectrogram_path = 'data/CREMA-D_spectrogram'
-cremad_audio_path = 'data/AudioWAV'
-batch_folder = 'batch/batch_v4'
+cremad_face_path = '/scratch1/wenshich/CREMA-D_openface'
+cremad_spectrogram_path = '/scratch1/wenshich/CREMA-D_spectrogram'
+cremad_audio_path = '/project/jonmay_231/wenshich/emotion_recognition/CREMA-D/AudioWAV'
+batch_folder = 'batch/'
 
 def write_to_batch(face_path, audio_path, spectrogram_path, target_folder):
     face_path = Path(face_path)

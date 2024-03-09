@@ -6,7 +6,7 @@ import yaml
 from lightning import seed_everything
 from utils.dataset import *
 import argparse
-from module.lstm_module import *
+from module.hubert_module import *
 
 
 def get_args():
@@ -15,7 +15,7 @@ def get_args():
     return parser.parse_args()
 
 
-def train_lstm():
+def train_hubert():
     args = get_args()
     wandb.init()
     wandb_logger = WandbLogger(entity='west-coast', project='emotion-recognition')
@@ -25,17 +25,16 @@ def train_lstm():
 
     train_loader, val_loader, test_loader = get_dataloader('cremad', hparams.batch_size)
 
-    model = LSTMModule(hidden_size=hparams.hidden_size,
-                       output_size=hparams.output_size,
-                       feature=args.feature,
-                       lr=hparams.lr,
-                       weight_decay=hparams.weight_decay)
+    model = HuBERTModule(feature=args.feature,
+                         num_labels=hparams.num_labels,
+                         lr=hparams.lr,
+                         weight_decay=hparams.weight_decay)
 
     # wandb name
-    wandb_logger.experiment.name = f'lstm_lr{hparams.lr}'
+    wandb_logger.experiment.name = f'hubert_lr{hparams.lr}'
 
     # checkpoint
-    checkpoint_path = Path(f'./checkpoint/lstm/lr{hparams.lr}').mkdir(exist_ok=True, parents=True) 
+    checkpoint_path = Path(f'./checkpoint/hubert/lr{hparams.lr}').mkdir(exist_ok=True, parents=True) 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_accuracy',
         mode='max',
@@ -58,9 +57,9 @@ def train_lstm():
 
 
 if __name__ == '__main__':
-    with open('cfgs/lstm.yaml', 'r') as f:
+    with open('cfgs/hubert.yaml', 'r') as f:
         sweep_config = yaml.safe_load(f)
 
     sweep_id = wandb.sweep(sweep=sweep_config, entity='west-coast',project="emotion-recognition")
 
-    wandb.agent(sweep_id, function=train_lstm)
+    wandb.agent(sweep_id, function=train_hubert)
