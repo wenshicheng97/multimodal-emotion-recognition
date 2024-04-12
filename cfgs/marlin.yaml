@@ -1,0 +1,31 @@
+method: 'grid'
+
+metric: 
+    name: 'val_accuracy'
+    goal: 'maximize'   
+
+parameters: 
+    seed:
+      value: 42 
+
+    lr: 
+      values: [3e-4, 5e-4, 3e-5, 1e-3]
+    weight_decay: 
+      value: 1e-5
+  
+    model:
+      value: 'marlin_vit_base_ytf'
+    n_classes:
+      value: 6
+
+    batch_size:
+      value: 32
+
+    devices:
+      value: 1
+    
+    epoch:
+      value: 100
+
+    ckpt:
+      value: 'ckpt/marlin'

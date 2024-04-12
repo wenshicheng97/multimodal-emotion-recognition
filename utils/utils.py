@@ -1,5 +1,62 @@
-import torch
+import torch, torchaudio, torchvision
 from torch.nn.utils.rnn import pad_sequence
+from einops import rearrange
+from torch.nn import functional as F
+
+
+def audio_extraction(audio_path):
+    waveform, sample_rate = torchaudio.load(audio_path)
+    if sample_rate != 16000:
+        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+        waveform = resampler(waveform)
+    return waveform.squeeze(0)
+
+
+def read_video(path: str, channel_first: bool = True):
+    video, _, _ = torchvision.io.read_video(path)
+    if channel_first:
+        video = rearrange(video, 'T H W C -> T C H W')
+    return video
+
+
+def sample_indexes(total_frames: int, n_frames: int, temporal_sample_rate: int) -> torch.Tensor:
+    try:
+        start_ind = torch.randint(0, total_frames - (n_frames * temporal_sample_rate) + 1, ())
+    except RuntimeError as e:
+        print(f"total_frames: {total_frames}, n_frames: {n_frames}, temporal_sample_rate: {temporal_sample_rate}")
+        raise e
+    return torch.arange(n_frames) * temporal_sample_rate + start_ind
+
+
+def padding_video(tensor: torch.Tensor, target: int, padding_method: str = "zero", padding_position: str = "tail") -> torch.Tensor:
+    t, c, h, w = tensor.shape
+    padding_size = target - t
+
+    pad = _get_padding_pair(padding_size, padding_position)
+
+    if padding_method == "zero":
+        return F.pad(tensor, pad=[0, 0, 0, 0, 0, 0] + pad)
+    elif padding_method == "same":
+        tensor = rearrange(tensor, "t c h w -> c h w t")
+        tensor = F.pad(tensor, pad=pad + [0, 0], mode="replicate")
+        return rearrange(tensor, "c h w t -> t c h w")
+    else:
+        raise ValueError("Wrong padding method. It should be zero or tail or average.")
+    
+
+def _get_padding_pair(padding_size: int, padding_position: str) -> list[int]:
+    if padding_position == "tail":
+        pad = [0, padding_size]
+    elif padding_position == "head":
+        pad = [padding_size, 0]
+    elif padding_position == "average":
+        padding_head = padding_size // 2
+        padding_tail = padding_size - padding_head
+        pad = [padding_head, padding_tail]
+    else:
+        raise ValueError("Wrong padding position. It should be zero or tail or average.")
+    return pad
+
 
 def window_transform(batch, lengths, window_size, stride):
     batch_size = batch.size(0)

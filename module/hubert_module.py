@@ -19,13 +19,12 @@ class HuBERTModule(LightningModule):
         'au18': 18 }
     
     def __init__(self,
-                feature,
                 num_labels,
                 lr, 
                 weight_decay):
         super().__init__()
         self.save_hyperparameters(ignore=['normalizer'])
-        self.feature = feature
+        self.feature = 'audio'
         self.hubert = HubertBase(num_labels=num_labels)
 
         self.lr = lr
@@ -70,8 +69,7 @@ class HuBERTModule(LightningModule):
 
 if __name__ == '__main__':
     train_loader, val_loader, test_loader = get_dataloader('cremad', 5)
-    model = HuBERTModule(feature='audio', 
-                         num_labels=6,
+    model = HuBERTModule(num_labels=6,
                          lr=0.001, 
                          weight_decay=0.0001)
     

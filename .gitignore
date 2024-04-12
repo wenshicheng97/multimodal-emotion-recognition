@@ -8,5 +8,6 @@ wandb/
 script/
 slurm/
 data/
-
+MARLIN/
+.marlin/
 playground.py

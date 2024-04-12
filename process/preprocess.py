@@ -4,8 +4,9 @@ import librosa
 import numpy as np
 import sys
 from tqdm import tqdm
-import torch
+import torchvision
 import torchaudio
+
 
 def melspectrogram_process(dir_name, outputdir_name):
     for i in tqdm(sorted(os.listdir(dir_name + '/'))):
@@ -18,13 +19,6 @@ def melspectrogram_process(dir_name, outputdir_name):
         data_trans = np.transpose(data)
         np.savez(output_path, audio = data_trans, label = str(i))
 
-
-def audio_extraction(audio_path):
-    waveform, sample_rate = torchaudio.load(audio_path)
-    if sample_rate != 16000:
-        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-        waveform = resampler(waveform)
-    return waveform.squeeze(0).numpy()
 
 
 if __name__ == '__main__':
