@@ -3,13 +3,18 @@ import pandas as pd
 import numpy as np
 from process.preprocess import *
 from marlin_pytorch import Marlin
-Marlin.clean_cache()
+import os
+
 
 cremad_face_path = '/scratch1/wenshich/CREMA-D_openface'
 cremad_spectrogram_path = '/scratch1/wenshich/CREMA-D_spectrogram'
 cremad_audio_path = '/home/tangyimi/emotion/data/cremad/AudioWAV'
 cremad_video_path = '/home/tangyimi/emotion/data/cremad/VideoMp4'
+
 batch_folder = 'batch/batch_v5'
+
+cremad_cropped_face = '/home/tangyimi/emotion/data/cremad/cropped_face'
+marlin_feat_path = '/home/tangyimi/emotion/data/cremad/marlin_face_base'
 
 # def write_to_batch(face_path, audio_path, spectrogram_path, target_folder):
 #     face_path = Path(face_path)
@@ -62,6 +67,18 @@ batch_folder = 'batch/batch_v5'
 #                 au18=au18,
 #                 label=label)
 
+def marlin_feat(video_path, target_path):
+    Marlin.clean_cache()
+    model = Marlin.from_online("marlin_vit_base_ytf") # marlin_vit_small_ytf # marlin_vit_large_ytf
 
-# if __name__ == '__main__':
-#     write_to_batch(cremad_audio_path, cremad_video_path, batch_folder)
+    for index, filename in enumerate(os.listdir(video_path)):
+        print(f'Processing {index+1}: {filename}')
+        features = model.extract_video(f'{video_path}/{filename}')
+        features = features.cpu().numpy()
+        label = filename.split('_')[2]
+        np.savez(f"{target_path}/{filename.split('.')[0]}.npz", features=features, label=label)
+
+
+
+if __name__ == '__main__':
+    marlin_feat(cremad_cropped_face, marlin_feat_path)

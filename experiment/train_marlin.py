@@ -15,10 +15,14 @@ def train_marlin():
 
     seed_everything(hparams.seed)
 
-    train_loader, val_loader, test_loader = get_dataloader('cremad', hparams.batch_size)
+    train_loader, val_loader, test_loader = get_dataloader(data='cremad', 
+                                                           batch_size=hparams.batch_size,
+                                                           fine_tune=hparams.fine_tune,)
 
     model = MarlinModule(model=hparams.model,
                          n_classes=hparams.n_classes,
+                         hidden_size=hparams.hidden_size,
+                         fine_tune=hparams.fine_tune,
                          lr=hparams.lr,
                          weight_decay=hparams.weight_decay)
 
@@ -26,7 +30,10 @@ def train_marlin():
     wandb_logger.experiment.name = f'marlin_lr{hparams.lr}'
 
     # checkpoint
-    checkpoint_path = Path(f'./{hparams.ckpt_dir}/lr{hparams.lr}').mkdir(exist_ok=True, parents=True) 
+    checkpoint_path = f'./{hparams.ckpt_dir}/lr{hparams.lr}'
+
+    Path(checkpoint_path).mkdir(exist_ok=True, parents=True) 
+    
     checkpoint_callback = ModelCheckpoint(
         monitor='val_accuracy',
         mode='max',

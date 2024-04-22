@@ -21,18 +21,25 @@ class MarlinModule(LightningModule):
     def __init__(self, 
                 model,
                 n_classes,
+                hidden_size,
+                fine_tune,
                 lr,
                 weight_decay,
-    ):
+                ):
         super().__init__()
         self.save_hyperparameters()
 
-        self.model = Marlin.from_online(model).encoder
-
+        self.fine_tune = fine_tune
+        if fine_tune: 
+            self.model = Marlin.from_online(model).encoder
         self.feature = 'video'
+
         self.n_classes = n_classes
 
-        self.fc = nn.Linear(self.EMBED_DIM[model], n_classes)
+        self.fc = nn.Sequential(
+            nn.Linear(self.EMBED_DIM[model], hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, n_classes))
         self.lr = lr
         self.weight_decay = weight_decay
         
@@ -50,7 +57,12 @@ class MarlinModule(LightningModule):
 
     def forward(self, batch):
         x = batch[self.feature]
-        feat = self.model.extract_features(x, True)
+
+        if self.fine_tune:
+            feat = self.model.extract_features(x, True)
+        else:
+            sum_x = x.sum(dim=1)
+            feat = sum_x / batch['seq_length'].unsqueeze(1).float()
         output = self.fc(feat)
         return batch['label'], output
 

@@ -12,6 +12,12 @@ parameters:
       values: [3e-4, 5e-4, 3e-5, 1e-3]
     weight_decay: 
       value: 1e-5
+
+    hidden_size:
+      value: 512
+
+    fine_tune:
+      value: False
   
     model:
       value: 'marlin_vit_base_ytf'
