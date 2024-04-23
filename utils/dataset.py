@@ -7,6 +7,7 @@ import numpy as np
 import ffmpeg
 from itertools import islice
 from utils.utils import audio_extraction, read_video, padding_video, sample_indexes
+from transformers import Wav2Vec2Processor
 
 # def cremad_collate_fn(batch):
 #     seq_length = [item['seq_length'] for item in batch]
@@ -129,6 +130,8 @@ class CREMADDataset(Dataset):
             'SAD': 5
         }
 
+        self.processer = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
+
     def __len__(self):
         return len(self.video_files)
 
@@ -204,6 +207,8 @@ class CREMADFeatures(Dataset):
             'NEU': 4,
             'SAD': 5
         }
+
+        self.processer = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
 
     def __len__(self):
         return len(self.video_files)

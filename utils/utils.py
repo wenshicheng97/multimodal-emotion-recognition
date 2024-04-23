@@ -2,14 +2,18 @@ import torch, torchaudio, torchvision
 from torch.nn.utils.rnn import pad_sequence
 from einops import rearrange
 from torch.nn import functional as F
+from torchaudio.sox_effects import apply_effects_file
 
 
-def audio_extraction(audio_path):
-    waveform, sample_rate = torchaudio.load(audio_path)
-    if sample_rate != 16000:
-        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-        waveform = resampler(waveform)
-    return waveform.squeeze(0)
+def audio_extraction(audio_path, processor):
+    # waveform, sample_rate = torchaudio.load(audio_path)
+    # if sample_rate != 16000:
+    #     resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+    #     waveform = resampler(waveform)
+    # return waveform.squeeze(0)
+    waveform, sample_rate = apply_effects_file(audio_path, effects=[["rate", "16000"]])
+    inputs = processor(waveform.squeeze(0), sampling_rate=16000, return_tensors="pt", padding="longest", truncation=True, max_length=96000)
+    return inputs.input_values.squeeze(0)
 
 
 def read_video(path: str, channel_first: bool = True):
