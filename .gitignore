@@ -10,4 +10,5 @@ slurm/
 data/
 MARLIN/
 .marlin/
+ckpt/
 playground.py
