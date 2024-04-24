@@ -57,17 +57,21 @@ class MarlinModule(LightningModule):
 
         if self.fine_tune:
             feat = self.model.extract_features(x, True)
-            start_idx = torch.cat([torch.tensor([0]), batch['num_seg'][:-1]]).to(self.device)
+            start = 0
+            video_outputs = []
+            
+            for num_seg in batch['num_seg']:
+                end = start + num_seg
+                current_feat = feat[start:end]
+                video_feat = torch.mean(current_feat, dim=0)
+                video_outputs.append(video_feat)
+                start = end
 
-            output = []
-            for start, end in zip(start_idx, batch['num_seg']):
-                feat[start:end] = torch.mean(feat[start:end], dim=1)
-                output.append(feat[start:end])
-            output = torch.stack(output)
+            feat_output = torch.stack(video_outputs)
         else:
             sum_x = x.sum(dim=1)
-            feat = sum_x / batch['seq_length'].unsqueeze(1).float()
-        output = self.fc(feat)
+            feat_output = sum_x / batch['seq_length'].unsqueeze(1).float()
+        output = self.fc(feat_output)
         return batch['label'], output
 
     def training_step(self, batch, batch_idx):

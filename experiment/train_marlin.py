@@ -43,13 +43,20 @@ def train_marlin():
         save_top_k=1,
     )
 
+    checkpoint_callback_every_n = ModelCheckpoint(
+        dirpath=checkpoint_path,
+        filename='{epoch}-{val_accuracy}',
+        every_n_epochs=1,
+        save_top_k=-1,
+    )
+
     # training
     trainer = pl.Trainer(accelerator = 'gpu', 
                          max_epochs=hparams.epoch, 
                          logger=wandb_logger, 
                          devices=hparams.devices, 
                          strategy='ddp',
-                         callbacks=[checkpoint_callback],
+                         callbacks=[checkpoint_callback, checkpoint_callback_every_n],
                          num_sanity_val_steps=0)
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 

@@ -12,7 +12,7 @@ parameters:
       value: 'marlin'
 
     lr: 
-      values: [3e-4, 5e-4, 3e-5, 1e-3]
+      values: [5e-5, 3e-4, 3e-5, 1e-3]
     weight_decay: 
       value: 1e-5
 
@@ -28,13 +28,13 @@ parameters:
       value: 6
 
     batch_size:
-      value: 16
+      value: 2
 
     devices:
       value: 1
     
     epoch:
-      value: 100
+      value: 10
 
     ckpt:
       value: 'ckpt/marlin_fine_tune'
