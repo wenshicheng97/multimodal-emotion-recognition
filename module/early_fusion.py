@@ -3,12 +3,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from utils.utils import *
-from utils.dataset import *
-
-from torchmetrics import Accuracy, F1Score
-
+from models.hubert import HubertBase
 from marlin_pytorch import Marlin
-from marlin_pytorch.config import resolve_config
+from torchmetrics import Accuracy, F1Score
 
 
 class EarlyFusion(LightningModule):
@@ -17,6 +14,7 @@ class EarlyFusion(LightningModule):
                 n_classes,
                 input_size,
                 hidden_size,
+                proj_size,
                 lr,
                 weight_decay,
                 ):
@@ -25,15 +23,48 @@ class EarlyFusion(LightningModule):
 
         self.n_classes = n_classes
 
+        self.hubert = HubertBase(num_labels=n_classes, proj_size=proj_size)
+        self.marlin = Marlin.from_online('marlin_vit_base_ytf').encoder
+
+        self.marlin_projector = nn.Linear(768, proj_size)
+
         self.fc = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, n_classes)
         )
-        
+
         self.lr = lr
         self.weight_decay = weight_decay
+
+
+    def forward(self, batch):
+        # video
+        video_x = batch['video']
+        feat = self.marlin.extract_features(video_x, True)
+        start = 0
+        video_outputs = []
         
+        for num_seg in batch['num_seg']:
+            end = start + num_seg
+            current_feat = feat[start:end]
+            video_feat = torch.mean(current_feat, dim=0)
+            video_outputs.append(video_feat)
+            start = end
+
+        video_raw_feat = torch.stack(video_outputs) # (bz, 768)
+
+        video_feat = self.marlin_projector(video_raw_feat) # (bz, 256)
+
+        # audio
+        audio_x = batch['audio']
+        
+        audio_feat = self.hubert(audio_x) # (bz, 256)
+
+        feat = torch.cat([video_feat, audio_feat], dim=0) 
+        output = self.fc(feat)
+        return batch['label'], output
+    
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), 
                                      lr=self.lr, 
@@ -41,19 +72,6 @@ class EarlyFusion(LightningModule):
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
                                                                T_max=self.trainer.max_epochs) 
         return [optimizer], [scheduler]
-
-
-    def forward(self, batch):
-        video = batch['video']
-        sum_video = video.sum(dim=1)
-        video_feat = sum_video / batch['seq_length'].unsqueeze(1).float()
-
-        audio_feat = batch['audio']
-
-        feat = torch.cat([video_feat, audio_feat], dim=1)
-            
-        output = self.fc(feat)
-        return batch['label'], output
 
     def training_step(self, batch, batch_idx):
         y, y_hat = self(batch)

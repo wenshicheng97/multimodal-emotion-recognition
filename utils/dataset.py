@@ -71,9 +71,9 @@ class CREMADDataset(Dataset):
         
         video = video.reshape(-1, self.clip_frames, 3, 224, 224).permute(0, 2, 1, 3, 4)
         
+        video = video[::self.temporal_sample_rate]
         num_segments = torch.tensor(video.shape[0], dtype=torch.long)
         
-
         return {'num_seg': num_segments,
                 'video': video, 
                 'audio': audio, 

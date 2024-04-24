@@ -1,0 +1,38 @@
+method: 'grid'
+
+metric: 
+    name: 'val_accuracy'
+    goal: 'maximize'   
+
+parameters: 
+    seed:
+      value: 42 
+
+    model_name:
+      value: 'earlyfusion'
+
+    lr: 
+      values: [3e-4, 5e-5, 3e-5, 1e-3]
+    weight_decay: 
+      value: 1e-5
+
+    n_classes:
+      value: 6
+    input_size:
+      value: 512
+    hidden_size:
+      value: 256
+    proj_size:
+      value: 256
+
+    batch_size:
+      value: 2
+
+    devices:
+      value: 1
+    
+    epoch:
+      value: 10
+
+    ckpt:
+      value: 'ckpt/early_fusion'
