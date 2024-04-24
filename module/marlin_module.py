@@ -51,15 +51,19 @@ class MarlinModule(LightningModule):
                                                                T_max=self.trainer.max_epochs) 
         return [optimizer], [scheduler]
 
-    # @classmethod
-    # def from_module(cls, model, learning_rate: float = 1e-4, distributed=False):
-    #     return cls(model, learning_rate, distributed)
 
     def forward(self, batch):
         x = batch[self.feature]
 
         if self.fine_tune:
             feat = self.model.extract_features(x, True)
+            start_idx = torch.cat([torch.tensor([0]), batch['num_seg'][:-1]]).to(self.device)
+
+            output = []
+            for start, end in zip(start_idx, batch['num_seg']):
+                feat[start:end] = torch.mean(feat[start:end], dim=1)
+                output.append(feat[start:end])
+            output = torch.stack(output)
         else:
             sum_x = x.sum(dim=1)
             feat = sum_x / batch['seq_length'].unsqueeze(1).float()
@@ -74,8 +78,7 @@ class MarlinModule(LightningModule):
 
     def on_validation_start(self):
         self.val_accuracy = Accuracy(task="multiclass", num_classes=self.n_classes).to(self.device)
-        self.val_f1 = F1Score(task="multiclass", num_classes=self.n_classes).to(self.device)
-
+        self.val_f1 = F1Score(task="multiclass", num_classes=self.n_classes, average='micro').to(self.device)
 
     def validation_step(self, batch, batch_idx):
         y, y_hat = self(batch)

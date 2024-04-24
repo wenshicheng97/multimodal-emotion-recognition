@@ -5,4 +5,8 @@ from MARLIN.util.face_sdk.face_crop import process_videos
 # make sure disable all logging
 
 if __name__ == '__main__':
-    process_videos('/home/tangyimi/emotion/data/cremad/VideoMp4', '/home/tangyimi/emotion/data/cremad/cropped_face', ext="mp4")
+    # cremad
+    #process_videos('/home/tangyimi/emotion/data/cremad/VideoMp4', '/home/tangyimi/emotion/data/cremad/cropped_face', ext="mp4")
+
+    # mosei
+    process_videos('/project/msoleyma_1026/CMU-MOSEI/MOSEI/Videos/Full/Combined', '/project/msoleyma_1026/MOSEI_cropped_face1', ext="mp4")

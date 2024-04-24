@@ -8,6 +8,9 @@ parameters:
     seed:
       value: 42 
 
+    model_name:
+      value: 'marlin'
+
     lr: 
       values: [3e-4, 5e-4, 3e-5, 1e-3]
     weight_decay: 
@@ -17,7 +20,7 @@ parameters:
       value: 512
 
     fine_tune:
-      value: False
+      value: True
   
     model:
       value: 'marlin_vit_base_ytf'
@@ -25,7 +28,7 @@ parameters:
       value: 6
 
     batch_size:
-      value: 32
+      value: 16
 
     devices:
       value: 1
@@ -34,4 +37,4 @@ parameters:
       value: 100
 
     ckpt:
-      value: 'ckpt/marlin'
+      value: 'ckpt/marlin_fine_tune'

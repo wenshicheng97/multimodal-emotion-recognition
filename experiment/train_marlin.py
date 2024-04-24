@@ -1,12 +1,12 @@
+import yaml, wandb, os
 import lightning.pytorch as pl
-import wandb
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
-import yaml
+
 from lightning import seed_everything
-from utils.dataset import *
-import argparse
-from module.marlin_module import *
+from utils.dataset import get_dataloader
+from module.marlin_module import MarlinModule
+from utils.name import get_search_hparams, get_experiment_name
 
 def train_marlin():
     wandb.init(entity='west-coast', project='emotion-recognition')
@@ -17,7 +17,7 @@ def train_marlin():
 
     train_loader, val_loader, test_loader = get_dataloader(data='cremad', 
                                                            batch_size=hparams.batch_size,
-                                                           fine_tune=hparams.fine_tune,)
+                                                           fine_tune=hparams.fine_tune)
 
     model = MarlinModule(model=hparams.model,
                          n_classes=hparams.n_classes,
@@ -27,12 +27,13 @@ def train_marlin():
                          weight_decay=hparams.weight_decay)
 
     # wandb name
-    wandb_logger.experiment.name = f'marlin_lr{hparams.lr}'
+    name = get_experiment_name(search_hparams, hparams)
+    wandb_logger.experiment.name = name
 
     # checkpoint
-    checkpoint_path = f'./{hparams.ckpt_dir}/lr{hparams.lr}'
+    checkpoint_path = f'./{hparams.ckpt}/{name}'
 
-    Path(checkpoint_path).mkdir(exist_ok=True, parents=True) 
+    os.makedirs(checkpoint_path, exist_ok=True)
     
     checkpoint_callback = ModelCheckpoint(
         monitor='val_accuracy',
@@ -58,6 +59,9 @@ def train_marlin():
 if __name__ == '__main__':
     with open('cfgs/marlin.yaml', 'r') as f:
         sweep_config = yaml.safe_load(f)
+
+    global search_hparams
+    search_hparams = get_search_hparams(sweep_config)
 
     sweep_id = wandb.sweep(sweep=sweep_config, entity='west-coast',project="emotion-recognition")
 

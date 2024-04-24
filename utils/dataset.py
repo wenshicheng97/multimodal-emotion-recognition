@@ -1,99 +1,10 @@
-import torch, torchvision
+import torch, torchvision, os, yaml
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import random_split
-from pathlib import Path
 import numpy as np
-import ffmpeg
-from itertools import islice
-from utils.utils import audio_extraction, read_video, padding_video, sample_indexes
+from utils.utils import audio_extraction, padding_video
 from transformers import Wav2Vec2Processor
-
-# def cremad_collate_fn(batch):
-#     seq_length = [item['seq_length'] for item in batch]
-#     gaze_angle = pad_sequence([item['gaze_angle'] for item in batch], batch_first=True)
-#     gaze_landmarks = pad_sequence([item['gaze_landmarks'] for item in batch], batch_first=True)
-#     face_landmarks = pad_sequence([item['face_landmarks'] for item in batch], batch_first=True)
-#     spectrogram = pad_sequence([item['spectrogram'] for item in batch], batch_first=True)
-#     audio = pad_sequence([item['audio'] for item in batch], batch_first=True)
-#     au17 = pad_sequence([item['au17'] for item in batch], batch_first=True)
-#     au18 = pad_sequence([item['au18'] for item in batch], batch_first=True)
-#     label = torch.tensor([item['label'] for item in batch], dtype=torch.long)
-
-#     return {
-#         'seq_length': torch.tensor(seq_length, dtype=torch.long),
-#         'gaze_angle': gaze_angle,
-#         'gaze_landmarks': gaze_landmarks,
-#         'face_landmarks': face_landmarks,
-#         'spectrogram': spectrogram,
-#         'audio': audio,
-#         'au17': au17,
-#         'au18': au18,
-#         'label': label }
-
-
-# class CREMADDataset(Dataset):
-    
-#     def __init__(self, data_path):
-#         self.path = Path(data_path)
-#         self.files = []
-#         self.emotion_dict = {
-#             'ANG': 0,
-#             'DIS': 1,
-#             'FEA': 2,
-#             'HAP': 3,
-#             'NEU': 4,
-#             'SAD': 5 }
-#         for file in self.path.glob('*.npz'):
-#             self.files.append(file)
-
-    
-#     def __len__(self):
-#         return len(self.files)
-
-    
-#     def __getitem__(self, idx):
-#         file = self.files[idx]
-#         data_loaded = np.load(file)
-
-#         gaze_angle = torch.tensor(data_loaded['gaze_angle'], dtype=torch.float32)
-#         gaze_landmarks = torch.tensor(data_loaded['gaze_landmarks'], dtype=torch.float32)
-#         face_landmarks = torch.tensor(data_loaded['face_landmarks'], dtype=torch.float32)
-#         spectrogram = torch.tensor(data_loaded['spectrogram'], dtype=torch.float32)
-#         audio = torch.tensor(data_loaded['audio'], dtype=torch.float32)
-#         au17 = torch.tensor(data_loaded['au17'], dtype=torch.float32)
-#         au18 = torch.tensor(data_loaded['au18'], dtype=torch.float32)
-        
-#         label = self.emotion_dict[str(data_loaded['label'])]
-#         seq_length = gaze_angle.shape[0]
-#         return {
-#             'seq_length': seq_length,
-#             'gaze_angle': gaze_angle,
-#             'gaze_landmarks': gaze_landmarks,
-#             'face_landmarks': face_landmarks,
-#             'spectrogram': spectrogram,
-#             'audio': audio,
-#             'au17': au17,
-#             'au18': au18,
-#             'label': label }
-
-# def get_dataloader(data, batch_size):
-#     if data == 'cremad':
-#         dataset = CREMADDataset('batch/batch_v4')
-
-#         train_size = int(0.8 * len(dataset))
-#         val_size = int(0.1 * len(dataset))
-#         test_size = len(dataset) - train_size - val_size
-#         train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size,val_size,test_size])
-
-#         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2, collate_fn=cremad_collate_fn)
-#         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=cremad_collate_fn)
-#         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=cremad_collate_fn)
-#     return train_loader, val_loader, test_loader
-
-import os
-from torch.utils.data import Dataset
-from marlin_pytorch import Marlin
 
 # for fine-tune
 class CREMADDataset(Dataset):
@@ -142,39 +53,31 @@ class CREMADDataset(Dataset):
 
         # process audio
         audio_path = self.audio_files[index]
-        audio = audio_extraction(audio_path)
+        audio = audio_extraction(audio_path, self.processer)
 
         # process video
         video_path = self.video_files[index]
-        probe = ffmpeg.probe(video_path)["streams"][0]
-        n_frames = int(probe["nb_frames"])
-
-        if n_frames <= self.clip_frames:
-            video = read_video(video_path, channel_first=True).video / 255
-            # pad frames to 16
-            video = padding_video(video, self.clip_frames, "same")  # (T, C, H, W)
-            video = video.permute(1, 0, 2, 3)  # (C, T, H, W)
-            
-            return video, audio, torch.tensor(label, dtype=torch.long)
-        
-        elif n_frames <= self.clip_frames * self.temporal_sample_rate:
-            # reset a lower temporal sample rate
-            sample_rate = n_frames // self.clip_frames
-        else:
-            sample_rate = self.temporal_sample_rate
-        # sample frames
-        video_indexes = sample_indexes(n_frames, self.clip_frames, sample_rate)
         reader = torchvision.io.VideoReader(video_path)
-        fps = reader.get_metadata()["video"]["fps"][0]
-        reader.seek(video_indexes[0].item() / fps, True)
-        frames = []
-        for frame in islice(reader, 0, self.clip_frames * sample_rate, sample_rate):
-            frames.append(frame["data"])
-        video = torch.stack(frames) / 255  # (T, C, H, W)
-        video = video.permute(1, 0, 2, 3)  # (C, T, H, W)
-        assert video.shape[1] == self.clip_frames, video_path
+        frames_list = []
 
-        return {'video': video, 'audio': audio, 'label': torch.tensor(label, dtype=torch.long)}
+        for frame in reader:
+            frames_list.append(frame['data'])
+
+        video = torch.stack(frames_list) / 255
+
+        if video.shape[0] % self.clip_frames != 0:
+            target_frames = video.shape[0] + self.clip_frames - video.shape[0] % self.clip_frames
+            video = padding_video(video, target_frames, "same")
+        
+        video = video.reshape(-1, self.clip_frames, 3, 224, 224).permute(0, 2, 1, 3, 4)
+        
+        num_segments = torch.tensor(video.shape[0], dtype=torch.long)
+        
+
+        return {'num_seg': num_segments,
+                'video': video, 
+                'audio': audio, 
+                'label': torch.tensor(label, dtype=torch.long)}
 
 
 # linear probing
@@ -220,14 +123,13 @@ class CREMADFeatures(Dataset):
 
         # process audio
         audio_path = self.audio_files[index]
-        audio = audio_extraction(audio_path)
+        audio = audio_extraction(audio_path, self.processer)
 
         # process video
         video_path = self.video_files[index]
         video = np.load(video_path)['features']
         video = torch.tensor(video, dtype=torch.float32)
         video_seq_length = video.shape[0]
-        print(video_seq_length)
 
         return {'video': video, 
                 'audio': audio, 
@@ -236,11 +138,13 @@ class CREMADFeatures(Dataset):
 
     
 def cremad_fine_tune(batch):
+    num_seg = [item['num_seg'] for item in batch]
     video = [item['video'] for item in batch]
     audio = pad_sequence([item['audio'] for item in batch], batch_first=True)
     label = [item['label'] for item in batch]
 
-    return {'video': torch.stack(video), 
+    return {'num_seg': torch.tensor(num_seg, dtype=torch.long),
+            'video': torch.cat(video, dim=0), 
             'audio': audio, 
             'label': torch.tensor(label, dtype=torch.long)}
 
@@ -248,24 +152,29 @@ def cremad_fine_tune(batch):
 def cremad_linear_probing(batch):
     video = pad_sequence([item['video'] for item in batch], batch_first=True)
     audio = pad_sequence([item['audio'] for item in batch], batch_first=True)
+    seq_length = [item['seq_length'] for item in batch]
     label = [item['label'] for item in batch]
 
     return {'video': video,
             'audio': audio, 
+            'seq_length': torch.tensor(seq_length, dtype=torch.long), 
             'label': torch.tensor(label, dtype=torch.long)}
 
 
 def get_dataloader(data, batch_size, fine_tune=False):
+    with open('cfgs/path.yaml', 'r') as f:
+        path_config = yaml.safe_load(f)
+
     if data == 'cremad':
         if fine_tune:
-            video_path = '/home/tangyimi/emotion/data/cremad/cropped_face'
-            audio_path = '/home/tangyimi/emotion/data/cremad/AudioWAV'
+            video_path = path_config['dataset']['cremad']['video']['ft']
+            audio_path = path_config['dataset']['cremad']['audio']
             dataset = CREMADDataset(video_path, audio_path, clip_frames=16, temporal_sample_rate=2)
             collate_fn = cremad_fine_tune
             
         else:
-            video_path = '/home/tangyimi/emotion/data/cremad/marlin_face_base'
-            audio_path = '/home/tangyimi/emotion/data/cremad/AudioWAV'
+            video_path = path_config['dataset']['cremad']['video']['lp']
+            audio_path = path_config['dataset']['cremad']['audio']
             dataset = CREMADFeatures(video_path, audio_path)
             collate_fn = cremad_linear_probing
 
@@ -283,7 +192,9 @@ def get_dataloader(data, batch_size, fine_tune=False):
 
 
 if __name__ == '__main__':
-    train_loader, val_loader, test_loader = get_dataloader('cremad', 10, fine_tune=False)
+    train_loader, val_loader, test_loader = get_dataloader('cremad', 2, fine_tune=True)
     for batch in train_loader:
-        print(batch['video'].shape, batch['audio'].shape, batch['label'])
+        print(batch['video'].shape, batch['label'], batch['audio'].shape, batch['num_seg'])
+        a = batch['video'][batch['num_seg']]
+        print(a.shape)
         break
