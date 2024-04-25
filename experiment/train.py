@@ -9,6 +9,8 @@ from utils.name import get_search_hparams, get_experiment_name
 
 from module.lightning_module import ExperimentModule
 
+os.environ['WANDB_SILENT'] = 'true'
+
 def train():
     wandb.init(entity='west-coast', project='emotion-recognition')
     wandb_logger = WandbLogger(entity='west-coast', project='emotion-recognition')

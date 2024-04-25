@@ -4,14 +4,21 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MarlinModel(nn.Module):
-    def __init__(self, fine_tune, proj_size):
+    EMDED_DIM = {'marlin_vit_small_ytf': 384,
+                'marlin_vit_base_ytf': 768, 
+                'marlin_vit_large_ytf': 1024}
+
+    def __init__(self, fine_tune, proj_size, marlin_model):
         super().__init__()
         self.fine_tune = fine_tune
+        self.marlin_model = marlin_model
+        self.proj_size = eval(proj_size)
 
         if self.fine_tune:
-            self.marlin = Marlin.from_online('marlin_vit_base_ytf').encoder
+            self.marlin = Marlin.from_online(marlin_model).encoder
 
-            self.marlin_projector = nn.Linear(768, proj_size)
+        if self.proj_size:
+            self.marlin_projector = nn.Linear(self.EMDED_DIM[marlin_model], proj_size)
 
     def forward(self, batch):
         video_x = batch['video']
@@ -27,25 +34,28 @@ class MarlinModel(nn.Module):
                 video_outputs.append(video_feat)
                 start = end
 
-            video_raw_feat = torch.stack(video_outputs) # (bz, 768)
+            video_feat = torch.stack(video_outputs) # (bz, 768)
         else:
             sum_x = video_x.sum(dim=1)
-            video_raw_feat = sum_x / batch['seq_length'].unsqueeze(1).float()
+            video_feat = sum_x / batch['seq_length'].unsqueeze(1).float()
 
-        video_feat = self.marlin_projector(video_raw_feat)
+        if self.proj_size:
+            video_feat = self.marlin_projector(video_feat)
         return video_feat
     
 class MarlinForClassification(nn.Module):
-    def __init__(self, num_classes, fine_tune, proj_size, hidden_size, n_classes):
+    def __init__(self, **kwargs):
         super().__init__()
-        self.marlin = MarlinModel(num_classes, fine_tune, proj_size)
+        self.marlin = MarlinModel(kwargs['fine_tune'], 
+                                kwargs['proj_size'], 
+                                kwargs['marlin_model'])
         self.fc = nn.Sequential(
-            nn.Linear(proj_size, hidden_size),
+            nn.Linear(self.marlin.EMDED_DIM[self.marlin.marlin_model], kwargs['hidden_size']),
             nn.ReLU(),
-            nn.Linear(hidden_size, n_classes)
+            nn.Linear(kwargs['hidden_size'], kwargs['n_classes'])
         )
 
     def forward(self, batch):
-        video_feat = self.marlin(input)
+        video_feat = self.marlin(batch)
         logits = self.fc(video_feat)
         return logits
