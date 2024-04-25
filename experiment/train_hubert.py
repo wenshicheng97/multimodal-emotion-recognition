@@ -7,6 +7,7 @@ from lightning import seed_everything
 from utils.dataset import *
 import argparse
 from module.hubert_module import *
+import os
 
 
 def train_hubert():
@@ -23,10 +24,11 @@ def train_hubert():
                          weight_decay=hparams.weight_decay)
 
     # wandb name
-    wandb_logger.experiment.name = f'hubert_lr{hparams.lr}'
+
+    checkpoint_path = f'./ckpt/hubert/lr{hparams.lr}'
+    os.makedirs(checkpoint_path, exist_ok=True)
 
     # checkpoint
-    checkpoint_path = Path(f'./checkpoint/hubert/lr{hparams.lr}').mkdir(exist_ok=True, parents=True) 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_accuracy',
         mode='max',
@@ -40,9 +42,10 @@ def train_hubert():
                          max_epochs=hparams.epoch, 
                          logger=wandb_logger, 
                          devices=hparams.devices, 
-                         strategy='ddp',
+                         strategy='ddp_find_unused_parameters_true',
                          callbacks=[checkpoint_callback],
-                         num_sanity_val_steps=0)
+                         num_sanity_val_steps=0,
+                         precision=16)
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     wandb.finish()

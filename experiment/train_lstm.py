@@ -7,6 +7,7 @@ from lightning import seed_everything
 from utils.dataset import *
 import argparse
 from module.lstm_module import *
+import os
 
 
 def get_args():

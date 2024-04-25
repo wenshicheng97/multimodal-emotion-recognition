@@ -19,12 +19,13 @@ def train_marlin():
                                                            batch_size=hparams.batch_size,
                                                            fine_tune=hparams.fine_tune)
 
-    model = EarlyFusion(model=hparams.model,
-                         n_classes=hparams.n_classes,
-                         hidden_size=hparams.hidden_size,
-                         fine_tune=hparams.fine_tune,
-                         lr=hparams.lr,
-                         weight_decay=hparams.weight_decay)
+    model = EarlyFusion(n_classes=hparams.n_classes,
+                        input_size=hparams.input_size,
+                        hidden_size=hparams.hidden_size,
+                        proj_size=hparams.proj_size,
+                        lr=hparams.lr,
+                        weight_decay=hparams.weight_decay,
+                        fine_tune=hparams.fine_tune)
 
     # wandb name
     name = get_experiment_name(search_hparams, hparams)
@@ -57,7 +58,8 @@ def train_marlin():
                          devices=hparams.devices, 
                          strategy='ddp_find_unused_parameters_true',
                          callbacks=[checkpoint_callback, checkpoint_callback_every_n],
-                         num_sanity_val_steps=0)
+                         num_sanity_val_steps=0,
+                         precision=16)
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     wandb.finish()

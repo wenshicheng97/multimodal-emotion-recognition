@@ -36,3 +36,6 @@ parameters:
 
     ckpt:
       value: 'ckpt/early_fusion'
+
+    fine_tune:
+      value: False

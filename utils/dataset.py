@@ -41,7 +41,8 @@ class CREMADDataset(Dataset):
             'SAD': 5
         }
 
-        self.processer = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
+        # self.processer = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
+        self.processor = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
 
     def __len__(self):
         return len(self.video_files)

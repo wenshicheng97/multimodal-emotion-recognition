@@ -6,13 +6,15 @@ from torchaudio.transforms import Resample
 from transformers import HubertModel, HubertConfig, HubertForSequenceClassification, Wav2Vec2FeatureExtractor
 
 class HubertBase(nn.Module):
-    def __init__(self, proj_size=None):
+    def __init__(self, proj_size=None, freeze=False):
         super().__init__()
         self.hubert = HubertModel.from_pretrained("facebook/hubert-large-ls960-ft")
+        # self.hubert = HubertModel.from_pretrained("facebook/hubert-base-ls960")
         self.hidden_size = self.hubert.config.hidden_size
         self.proj_size = self.hubert.config.classifier_proj_size if proj_size is None else proj_size
         self.projector = nn.Linear(self.hidden_size, self.proj_size)
         self._init_weights(self.projector)
+        self.freeze = freeze
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -20,7 +22,11 @@ class HubertBase(nn.Module):
             nn.init.zeros_(module.bias)
 
     def forward(self, input_values):
-        outputs = self.hubert(input_values)
+        if self.freeze:
+            with torch.no_grad():
+                outputs = self.hubert(input_values)
+        else:
+            outputs = self.hubert(input_values)
         hidden_states = outputs[0]
         hidden_states = self.projector(hidden_states)
         return hidden_states.mean(dim=1)

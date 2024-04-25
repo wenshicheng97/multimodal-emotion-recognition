@@ -24,7 +24,7 @@ parameters:
       value: 1
     
     epoch:
-      value: 100
+      value: 10
 
     ckpt:
       value: 'ckpt-hubert'

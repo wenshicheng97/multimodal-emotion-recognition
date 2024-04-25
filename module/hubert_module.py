@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import lightning.pytorch as pl
-from models.hubert import *
+from models.hubert import HubertForClassification
 from utils.utils import *
 from utils.dataset import *
 
@@ -25,7 +25,7 @@ class HuBERTModule(LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=['normalizer'])
         self.feature = 'audio'
-        self.hubert = HubertBase(num_labels=num_labels)
+        self.hubert = HubertForClassification(num_labels=num_labels)
 
         self.lr = lr
         self.weight_decay = weight_decay

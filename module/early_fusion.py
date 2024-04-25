@@ -12,6 +12,7 @@ class EarlyFusion(LightningModule):
 
     def __init__(self, 
                 n_classes,
+                fine_tune,
                 input_size,
                 hidden_size,
                 proj_size,
@@ -22,9 +23,11 @@ class EarlyFusion(LightningModule):
         self.save_hyperparameters()
 
         self.n_classes = n_classes
+        self.fine_tune = fine_tune
 
-        self.hubert = HubertBase(num_labels=n_classes, proj_size=proj_size)
-        self.marlin = Marlin.from_online('marlin_vit_base_ytf').encoder
+        self.hubert = HubertBase(proj_size=proj_size, freeze=(not fine_tune))
+        if self.fine_tune:
+            self.marlin = Marlin.from_online('marlin_vit_base_ytf').encoder
 
         self.marlin_projector = nn.Linear(768, proj_size)
 
@@ -41,18 +44,23 @@ class EarlyFusion(LightningModule):
     def forward(self, batch):
         # video
         video_x = batch['video']
-        feat = self.marlin.extract_features(video_x, True)
-        start = 0
-        video_outputs = []
-        
-        for num_seg in batch['num_seg']:
-            end = start + num_seg
-            current_feat = feat[start:end]
-            video_feat = torch.mean(current_feat, dim=0)
-            video_outputs.append(video_feat)
-            start = end
 
-        video_raw_feat = torch.stack(video_outputs) # (bz, 768)
+        if self.fine_tune:
+            feat = self.marlin.extract_features(video_x, True)
+            start = 0
+            video_outputs = []
+            
+            for num_seg in batch['num_seg']:
+                end = start + num_seg
+                current_feat = feat[start:end]
+                video_feat = torch.mean(current_feat, dim=0)
+                video_outputs.append(video_feat)
+                start = end
+
+            video_raw_feat = torch.stack(video_outputs) # (bz, 768)
+        else:
+            sum_x = video_x.sum(dim=1)
+            video_raw_feat = sum_x / batch['seq_length'].unsqueeze(1).float()
 
         video_feat = self.marlin_projector(video_raw_feat) # (bz, 256)
 
@@ -61,7 +69,7 @@ class EarlyFusion(LightningModule):
         
         audio_feat = self.hubert(audio_x) # (bz, 256)
 
-        feat = torch.cat([video_feat, audio_feat], dim=0) 
+        feat = torch.cat([video_feat, audio_feat], dim=1) 
         output = self.fc(feat)
         return batch['label'], output
     
