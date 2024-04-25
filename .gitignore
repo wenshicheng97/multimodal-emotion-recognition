@@ -9,6 +9,7 @@ script/
 slurm/
 data/
 MARLIN/
+hubert/
 .marlin/
 ckpt/
 playground.py

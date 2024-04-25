@@ -15,6 +15,7 @@ class ExperimentModule(LightningModule):
         self.save_hyperparameters()
         self.lr = kwargs['lr']
         self.weight_decay = kwargs['weight_decay']
+        self.n_classes = kwargs['n_classes']
 
         # self.model = eval(hparams['model'])(hparams)
         self.model = globals()[kwargs['model']](**kwargs)
