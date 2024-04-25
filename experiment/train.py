@@ -7,7 +7,7 @@ from utils.dataset import get_dataloader
 
 from utils.name import get_search_hparams, get_experiment_name
 
-from module.marlin_module import lightning_module
+from module.lightning_module import ExperimentModule
 
 def train():
     wandb.init(entity='west-coast', project='emotion-recognition')
@@ -20,7 +20,7 @@ def train():
                                                            batch_size=hparams.batch_size,
                                                            fine_tune=hparams.fine_tune)
 
-    model = lightning_module(hparams)
+    model = ExperimentModule(**hparams)
 
     # wandb name
     name = get_experiment_name(search_hparams, hparams)
@@ -62,6 +62,7 @@ def train():
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment', '-e', type=str)
+    parser.add_argument('--sweep_name', type=str)
 
     return parser.parse_args()
 
@@ -74,6 +75,7 @@ if __name__ == '__main__':
 
     global search_hparams
     search_hparams = get_search_hparams(sweep_config)
+    sweep_config['name'] += args.sweep_name
 
     sweep_id = wandb.sweep(sweep=sweep_config, entity='west-coast',project="emotion-recognition")
 

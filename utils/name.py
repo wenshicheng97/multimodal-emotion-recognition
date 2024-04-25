@@ -8,5 +8,5 @@ def get_search_hparams(config):
 
 def get_experiment_name(search_hparams, hparams):
     if search_hparams:
-        return '_'.join([hparams.model_name] + [f'{k}={v}' for k,v in hparams.items() if k in search_hparams])
-    return f'{hparams.model_name}'
+        return '_'.join([hparams.model] + [f'{k}={v}' for k,v in hparams.items() if k in search_hparams])
+    return f'{hparams.model}'

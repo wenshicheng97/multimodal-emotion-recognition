@@ -81,17 +81,17 @@ class GatedFusion(nn.Module):
         self.marlin = MarlinModel(fine_tune=kwargs['fine_tune'], proj_size=kwargs['proj_size'])
         self.hubert = HubertBase(proj_size=kwargs['proj_size'], freeze=(not kwargs['fine_tune']))
 
-        self.fusion_model = GeneralizedGatedMultimodalUnit(dims=kwargs['proj_size'], 
+        self.fusion_model = GeneralizedGatedMultimodalUnit(dims=[kwargs['proj_size'], kwargs['proj_size']], 
                                                      dim_out=kwargs['dim_out'])
         self.classifier = nn.Sequential(
             nn.Linear(kwargs['dim_out'], kwargs['hidden_size']),
             nn.ReLU(),
-            nn.Linear(kwargs['hidden_size'], kwargs['num_classes'])
+            nn.Linear(kwargs['hidden_size'], kwargs['n_classes'])
         )
 
     def forward(self, batch):
         # video
-        video_feat = self.marlin_projector(batch) # (bz, 256)
+        video_feat = self.marlin(batch) # (bz, 256)
 
         audio_feat = self.hubert(batch['audio']) # (bz, 256)
 

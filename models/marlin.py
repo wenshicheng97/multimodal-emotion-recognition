@@ -11,10 +11,10 @@ class MarlinModel(nn.Module):
         if self.fine_tune:
             self.marlin = Marlin.from_online('marlin_vit_base_ytf').encoder
 
-        self.marlin_projector = nn.Linear(768, proj_size)
+            self.marlin_projector = nn.Linear(768, proj_size)
 
     def forward(self, batch):
-        video_x = batch['video_x']
+        video_x = batch['video']
         if self.fine_tune:
             feat = self.marlin.extract_features(video_x, True)
             start = 0

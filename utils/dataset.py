@@ -41,7 +41,6 @@ class CREMADDataset(Dataset):
             'SAD': 5
         }
 
-        # self.processer = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
         self.processor = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
 
     def __len__(self):
@@ -54,7 +53,7 @@ class CREMADDataset(Dataset):
 
         # process audio
         audio_path = self.audio_files[index]
-        audio = audio_extraction(audio_path, self.processer)
+        audio = audio_extraction(audio_path, self.processor)
 
         # process video
         video_path = self.video_files[index]
@@ -112,7 +111,7 @@ class CREMADFeatures(Dataset):
             'SAD': 5
         }
 
-        self.processer = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
+        self.processor = Wav2Vec2Processor.from_pretrained("facebook/hubert-large-ls960-ft")
 
     def __len__(self):
         return len(self.video_files)
@@ -124,7 +123,7 @@ class CREMADFeatures(Dataset):
 
         # process audio
         audio_path = self.audio_files[index]
-        audio = audio_extraction(audio_path, self.processer)
+        audio = audio_extraction(audio_path, self.processor)
 
         # process video
         video_path = self.video_files[index]

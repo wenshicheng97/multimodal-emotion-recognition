@@ -8,12 +8,12 @@ parameters:
     seed:
       value: 42 
 
-    model_name:
-      value: 'gatefusion'
+    model:
+      value: 'GatedFusion'
 
     # optimizer
     lr: 
-      values: [3e-4, 5e-5, 3e-5, 1e-3]
+      values: [ 5e-5, 3e-5, 3e-4]
     weight_decay: 
       value: 1e-5
 

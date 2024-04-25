@@ -5,20 +5,19 @@ import torch.nn.functional as F
 import lightning.pytorch as pl
 from torchmetrics import Accuracy
 
-from models.gate_fusion import GateFusion
+from models.gate_fusion import GatedFusion
 
 class ExperimentModule(LightningModule):
 
     def __init__(self, 
-                lr,
-                weight_decay,
-                **kwargs):
+                 **kwargs):
         super().__init__()
         self.save_hyperparameters()
-        self.lr = lr
-        self.weight_decay = weight_decay
+        self.lr = kwargs['lr']
+        self.weight_decay = kwargs['weight_decay']
 
-        self.model = eval(kwargs['model'])(**kwargs)
+        # self.model = eval(hparams['model'])(hparams)
+        self.model = globals()[kwargs['model']](**kwargs)
 
 
     def forward(self, batch):
