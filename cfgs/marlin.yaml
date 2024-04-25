@@ -6,13 +6,13 @@ metric:
 
 parameters: 
     seed:
-      value: 42 
+      value: 0
 
     model_name:
       value: 'marlin'
 
     lr: 
-      values: [5e-5, 3e-4, 3e-5, 1e-3]
+      values: [5e-5, 3e-5]
     weight_decay: 
       value: 1e-5
 
@@ -23,7 +23,7 @@ parameters:
       value: True
   
     model:
-      value: 'marlin_vit_base_ytf'
+      values: 'marlin_vit_base_ytf' #'marlin_vit_small_ytf'  'marlin_vit_large_ytf'
     n_classes:
       value: 6
 
@@ -31,10 +31,10 @@ parameters:
       value: 2
 
     devices:
-      value: 1
+      value: 2
     
     epoch:
-      value: 10
+      value: 20
 
     ckpt:
-      value: 'ckpt/marlin_fine_tune'
+      value: 'ckpt/marlin_fine_tune_16'

@@ -1,0 +1,50 @@
+method: 'grid'
+name: 'gatefusion'
+metric: 
+    name: 'val_accuracy'
+    goal: 'maximize'   
+
+parameters: 
+    seed:
+      value: 42 
+
+    model_name:
+      value: 'gatefusion'
+
+    # optimizer
+    lr: 
+      values: [3e-4, 5e-5, 3e-5, 1e-3]
+    weight_decay: 
+      value: 1e-5
+
+    # model hparams
+    dim_out:
+      value: 256
+    n_classes:
+      value: 6
+    input_size:
+      value: 512
+    hidden_size:
+      value: 256
+    proj_size:
+      value: 256
+    fine_tune:
+      value: True
+
+    # trainer hparams
+    batch_size:
+      value: 2
+    devices:
+      value: 1
+    epoch:
+      value: 10
+    strategy:
+      value: 'ddp_find_unused_parameters_true' # 'ddp'
+    precision:
+      value: 16
+
+    # checkpoint root dir
+    ckpt:
+      value: 'ckpt/gated_fusion'
+
+    

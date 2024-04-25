@@ -1,14 +1,15 @@
-import yaml, wandb, os
+import yaml, wandb, os, argparse
 import lightning.pytorch as pl
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
-
 from lightning import seed_everything
 from utils.dataset import get_dataloader
-from module.marlin_module import MarlinModule
+
 from utils.name import get_search_hparams, get_experiment_name
 
-def train_marlin():
+from module.marlin_module import lightning_module
+
+def train():
     wandb.init(entity='west-coast', project='emotion-recognition')
     wandb_logger = WandbLogger(entity='west-coast', project='emotion-recognition')
     hparams = wandb.config
@@ -19,19 +20,14 @@ def train_marlin():
                                                            batch_size=hparams.batch_size,
                                                            fine_tune=hparams.fine_tune)
 
-    model = MarlinModule(model=hparams.model,
-                         n_classes=hparams.n_classes,
-                         hidden_size=hparams.hidden_size,
-                         fine_tune=hparams.fine_tune,
-                         lr=hparams.lr,
-                         weight_decay=hparams.weight_decay)
+    model = lightning_module(hparams)
 
     # wandb name
     name = get_experiment_name(search_hparams, hparams)
     wandb_logger.experiment.name = name
 
     # checkpoint
-    checkpoint_path = f'./{hparams.ckpt}/{name}_large'
+    checkpoint_path = f'./{hparams.ckpt}/{name}'
 
     os.makedirs(checkpoint_path, exist_ok=True)
     
@@ -55,17 +51,25 @@ def train_marlin():
                          max_epochs=hparams.epoch, 
                          logger=wandb_logger, 
                          devices=hparams.devices, 
-                         strategy='ddp',
+                         strategy=hparams.strategy,
                          callbacks=[checkpoint_callback, checkpoint_callback_every_n],
                          num_sanity_val_steps=0,
-                         precision=16)
+                         precision=hparams.precision)
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     wandb.finish()
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--experiment', '-e', type=str)
+
+    return parser.parse_args()
+
 
 if __name__ == '__main__':
-    with open('cfgs/marlin.yaml', 'r') as f:
+    args = get_args()
+
+    with open(f'cfgs/{args.experiment}.yaml', 'r') as f:
         sweep_config = yaml.safe_load(f)
 
     global search_hparams
@@ -73,4 +77,4 @@ if __name__ == '__main__':
 
     sweep_id = wandb.sweep(sweep=sweep_config, entity='west-coast',project="emotion-recognition")
 
-    wandb.agent(sweep_id, function=train_marlin)
+    wandb.agent(sweep_id, function=train)

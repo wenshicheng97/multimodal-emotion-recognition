@@ -1,7 +1,8 @@
 import torch
-import torchaudio
 import torch.nn as nn
 import torch.nn.functional as F
+from models.hubert import HubertBase
+from models.marlin import MarlinModel
 
 
 class BimodalGatedMultimodalUnit(nn.Module):
@@ -72,3 +73,27 @@ class GeneralizedGatedMultimodalUnit(nn.Module):
         fused_output = torch.stack([normalized_gates[i] * transformed[i] for i in range(self.modalities)], dim=0).sum(dim=0)
         
         return fused_output
+    
+
+class GatedFusion(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.marlin = MarlinModel(fine_tune=kwargs['fine_tune'], proj_size=kwargs['proj_size'])
+        self.hubert = HubertBase(proj_size=kwargs['proj_size'], freeze=(not kwargs['fine_tune']))
+
+        self.fusion_model = GeneralizedGatedMultimodalUnit(dims=kwargs['proj_size'], 
+                                                     dim_out=kwargs['dim_out'])
+        self.classifier = nn.Sequential(
+            nn.Linear(kwargs['dim_out'], kwargs['hidden_size']),
+            nn.ReLU(),
+            nn.Linear(kwargs['hidden_size'], kwargs['num_classes'])
+        )
+
+    def forward(self, batch):
+        # video
+        video_feat = self.marlin_projector(batch) # (bz, 256)
+
+        audio_feat = self.hubert(batch['audio']) # (bz, 256)
+
+        fused_output = self.fusion_model(video_feat, audio_feat)
+        return self.classifier(fused_output)
