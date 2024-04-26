@@ -6,14 +6,14 @@ metric:
 
 parameters: 
     seed:
-      value: 42 
+      value: 0
 
     model:
       value: 'GatedFusion'
 
     # optimizer
     lr: 
-      values: [ 5e-5, 3e-5, 3e-4]
+      values: [3e-5, 3e-4]
     weight_decay: 
       value: 1e-5
 

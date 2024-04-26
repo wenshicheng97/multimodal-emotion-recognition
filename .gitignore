@@ -9,6 +9,8 @@ script/
 slurm/
 data/
 MARLIN/
+hubert/
 .marlin/
 ckpt/
+path.yaml
 playground.py

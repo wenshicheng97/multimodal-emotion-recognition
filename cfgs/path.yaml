@@ -1,6 +1,6 @@
 dataset:
   cremad:
-    audio: '/project/msoleyma_1026/AudioWAV'
+    audio: '/home/tangyimi/emotion/data/cremad/AudioWAV'
     video:
-      ft: '/project/msoleyma_1026/cropped_face'
-      lp: '/project/msoleyma_1026/marlin_face_base'
+      ft: '/home/tangyimi/emotion/data/cremad/cropped_face'
+      lp: '/home/tangyimi/emotion/data/cremad/marlin_face_base'

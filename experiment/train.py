@@ -9,6 +9,8 @@ from utils.name import get_search_hparams, get_experiment_name
 
 from module.lightning_module import ExperimentModule
 
+os.environ['WANDB_SILENT'] = 'true'
+
 def train():
     wandb.init(entity='west-coast', project='emotion-recognition')
     wandb_logger = WandbLogger(entity='west-coast', project='emotion-recognition')
@@ -47,15 +49,14 @@ def train():
     )
 
     # training
-    trainer = pl.Trainer(accelerator = 'gpu', 
-                         max_epochs=hparams.epoch, 
+    trainer = pl.Trainer(max_epochs=hparams.epoch, 
                          logger=wandb_logger, 
-                         devices=hparams.devices, 
                          strategy=hparams.strategy,
                          callbacks=[checkpoint_callback, checkpoint_callback_every_n],
                          num_sanity_val_steps=0,
                          precision=hparams.precision)
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    # trainer.validate(model, dataloaders=val_loader)
 
     wandb.finish()
 

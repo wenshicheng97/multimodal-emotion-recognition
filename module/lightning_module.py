@@ -6,6 +6,7 @@ import lightning.pytorch as pl
 from torchmetrics import Accuracy
 
 from models.gate_fusion import GatedFusion
+from models.marlin import MarlinForClassification
 
 class ExperimentModule(LightningModule):
 
@@ -15,6 +16,7 @@ class ExperimentModule(LightningModule):
         self.save_hyperparameters()
         self.lr = kwargs['lr']
         self.weight_decay = kwargs['weight_decay']
+        self.n_classes = kwargs['n_classes']
 
         # self.model = eval(hparams['model'])(hparams)
         self.model = globals()[kwargs['model']](**kwargs)
@@ -34,7 +36,7 @@ class ExperimentModule(LightningModule):
     def training_step(self, batch, batch_idx):
         y, y_hat = self(batch)
         loss = F.cross_entropy(y_hat, y, reduction='mean')
-        self.log('train_loss', loss, on_epoch=True, sync_dist=True)
+        self.log('train_loss', loss, on_epoch=True, sync_dist=True, batch_size=batch['label'].size(0))
         return loss
 
     def on_validation_start(self):

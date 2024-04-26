@@ -1,5 +1,5 @@
 method: 'grid'
-
+name: 'marlin'
 metric: 
     name: 'val_accuracy'
     goal: 'maximize'   
@@ -8,33 +8,35 @@ parameters:
     seed:
       value: 0
 
-    model_name:
-      value: 'marlin'
+    model:
+      value: 'MarlinForClassification'
 
+    # optimizer
     lr: 
-      values: [5e-5, 3e-5]
+      values: [3e-4, 3e-5]
     weight_decay: 
       value: 1e-5
 
     hidden_size:
       value: 512
-
+    proj_size:
+      value: None
     fine_tune:
       value: True
-  
-    model:
-      values: 'marlin_vit_base_ytf' #'marlin_vit_small_ytf'  'marlin_vit_large_ytf'
+    marlin_model:
+      values: ['marlin_vit_base_ytf', 'marlin_vit_large_ytf'] #'marlin_vit_small_ytf'  'marlin_vit_large_ytf'
     n_classes:
       value: 6
 
     batch_size:
       value: 2
-
-    devices:
-      value: 2
+    strategy:
+      value: 'ddp'
+    precision:
+      value: 16
     
     epoch:
       value: 20
 
     ckpt:
-      value: 'ckpt/marlin_fine_tune_16'
+      value: 'ckpt/marlin_fine_tune'
