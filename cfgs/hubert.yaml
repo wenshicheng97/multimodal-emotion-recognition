@@ -7,9 +7,11 @@ metric:
 parameters: 
     seed:
       value: 42 
+    model:
+      value: 'hubert-large'
 
     lr: 
-      values: [3e-4, 5e-4, 3e-5, 1e-3]
+      values: [5e-5, 3e-5]
     weight_decay: 
       value: 1e-5
   
@@ -22,9 +24,12 @@ parameters:
 
     devices:
       value: 1
+
+    precision:
+      values: [32, 16]
     
     epoch:
       value: 10
 
     ckpt:
-      value: 'ckpt-hubert'
+      value: 'ckpt/hubert-large-best'
