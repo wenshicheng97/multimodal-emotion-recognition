@@ -7,7 +7,7 @@ from utils.dataset import get_dataloader
 
 from utils.name import get_search_hparams, get_experiment_name
 
-from module.lightning_module import ExperimentModule
+from lightning_module import ExperimentModule
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -18,7 +18,7 @@ def train():
 
     seed_everything(hparams.seed)
 
-    train_loader, val_loader, test_loader = get_dataloader(data='cremad', 
+    train_loader, val_loader, test_loader = get_dataloader(data=hparams.data, 
                                                            batch_size=hparams.batch_size,
                                                            fine_tune=hparams.fine_tune)
 
@@ -44,7 +44,7 @@ def train():
     checkpoint_callback_every_n = ModelCheckpoint(
         dirpath=checkpoint_path,
         filename='{epoch}-{val_accuracy}',
-        every_n_epochs=1,
+        every_n_epochs=3,
         save_top_k=-1,
     )
 
@@ -74,7 +74,6 @@ if __name__ == '__main__':
     with open(f'cfgs/{args.experiment}.yaml', 'r') as f:
         sweep_config = yaml.safe_load(f)
 
-    global search_hparams
     search_hparams = get_search_hparams(sweep_config)
     sweep_config['name'] += args.sweep_name
 

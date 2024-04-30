@@ -7,6 +7,9 @@ from torchmetrics import Accuracy
 
 from models.gate_fusion import GatedFusion
 from models.marlin import MarlinForClassification
+from models.hubert import HubertForClassification
+from models.early_fusion import EarlyFusion
+from models.lstm import LSTMModel
 
 class ExperimentModule(LightningModule):
 
@@ -18,7 +21,6 @@ class ExperimentModule(LightningModule):
         self.weight_decay = kwargs['weight_decay']
         self.n_classes = kwargs['n_classes']
 
-        # self.model = eval(hparams['model'])(hparams)
         self.model = globals()[kwargs['model']](**kwargs)
 
 

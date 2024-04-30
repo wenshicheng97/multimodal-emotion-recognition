@@ -1,5 +1,5 @@
 method: 'grid'
-
+name: 'earlyfusion'
 metric: 
     name: 'val_accuracy'
     goal: 'maximize'   
@@ -7,15 +7,18 @@ metric:
 parameters: 
     seed:
       value: 42 
+    model:
+      value: 'EarlyFusion'
+    data:
+      value: 'cremad'
 
-    model_name:
-      value: 'earlyfusion'
-
+    # optimizer
     lr: 
-      values: [3e-4, 5e-5, 3e-5, 1e-3]
+      value: 3e-4
     weight_decay: 
       value: 1e-5
 
+    # model parameters
     n_classes:
       value: 6
     input_size:
@@ -24,18 +27,21 @@ parameters:
       value: 256
     proj_size:
       value: 256
+    fine_tune:
+      value: True
+    marlin_model: 
+      value: 'marlin_vit_base_ytf'
 
     batch_size:
       value: 2
-
-    devices:
-      value: 1
-    
+    strategy:
+      value: 'ddp_find_unused_parameters_true'
+    precision:
+      value: 16
     epoch:
-      value: 10
+      value: 1
 
     ckpt:
-      value: 'ckpt/early_fusion'
+      value: 'ckpt/early_fusion/test'
 
-    fine_tune:
-      value: False
+    

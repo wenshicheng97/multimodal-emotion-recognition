@@ -7,4 +7,4 @@
 #SBATCH --job-name=MOSEI
 #SBATCH --output=slurm/marlin/MOSEI_%j.out
 
-python sample.py
+python mosei_select.py

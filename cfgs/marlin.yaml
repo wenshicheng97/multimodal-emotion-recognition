@@ -11,6 +11,9 @@ parameters:
     model:
       value: 'MarlinForClassification'
 
+    data:
+      value: 'cremad'
+
     # optimizer
     lr: 
       values: [3e-4, 3e-5]
@@ -28,6 +31,7 @@ parameters:
     n_classes:
       value: 6
 
+    # trainer
     batch_size:
       value: 2
     strategy:

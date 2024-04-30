@@ -1,5 +1,5 @@
 method: 'grid'
-
+name: 'LSTM'
 metric: 
     name: 'val_accuracy'
     goal: 'maximize'   
@@ -8,26 +8,35 @@ parameters:
     seed:
       value: 42 
 
+    model:
+      value: 'LSTMModel'
+    data:
+      value: 'cremad'
+
+    # optimizer parameters
     lr: 
       values: [3e-4, 5e-4, 3e-5, 1e-3]
     weight_decay: 
       value: 1e-5
   
     # lstm parameters
+    input_size:
+      value: 17
     hidden_size:
       value: 128
-    output_size:
+    n_classes:
       value: 6
 
-
+    # trainer
     batch_size:
       value: 32
-
-    devices:
-      value: 1
+    strategy:
+      value: 'ddp'
+    precision:
+      value: 32
     
     epoch:
-      value: 100
+      value: 1
 
     ckpt:
-      value: 'ckpt-lstm'
+      value: 'ckpt/lstm/test'

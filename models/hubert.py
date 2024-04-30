@@ -1,9 +1,6 @@
 import torch
-import torchaudio
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-from torchaudio.transforms import Resample
-from transformers import HubertModel, HubertConfig, HubertForSequenceClassification, Wav2Vec2FeatureExtractor
+from transformers import HubertModel
 
 class HubertBase(nn.Module):
     def __init__(self, proj_size=None, freeze=False):
@@ -33,10 +30,10 @@ class HubertBase(nn.Module):
     
     
 class HubertForClassification(nn.Module):
-    def __init__(self, num_labels):
+    def __init__(self, **kwargs):
         super().__init__()
-        self.hubert = HubertBase()
-        self.classifier = nn.Linear(self.hubert.proj_size, num_labels)
+        self.hubert = HubertBase(kwargs['proj_size'], not kwargs['fine_tune'])
+        self.classifier = nn.Linear(self.hubert.proj_size, kwargs['n_classes'])
         self._init_weights(self.classifier)
 
     def _init_weights(self, module):
@@ -44,7 +41,8 @@ class HubertForClassification(nn.Module):
             nn.init.kaiming_normal_(module.weight)
             nn.init.zeros_(module.bias)
 
-    def forward(self, input_values):
-        hidden_states = self.hubert(input_values)
+    def forward(self, batch):
+        audio = batch['audio']
+        hidden_states = self.hubert(audio)
         output = self.classifier(hidden_states)
         return output

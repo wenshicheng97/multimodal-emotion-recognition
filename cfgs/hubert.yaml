@@ -1,4 +1,5 @@
 method: 'grid'
+name: 'hubert'
 metric: 
     name: 'val_accuracy'
     goal: 'maximize'   
@@ -7,35 +8,34 @@ parameters:
     seed:
       value: 0
     model:
-      value: 'hubert-large'
+      value: 'HubertForClassification'
+    data:
+      value: 'cremad'
 
+    # optimizer
     lr: 
       values: [5e-5, 3e-5]
     weight_decay: 
       value: 1e-5
   
     # hubert parameters
-    num_labels:
-      value: 7
+    n_classes:
+      value: 6
+    proj_size:
+      value: null
+    fine_tune:
+      value: True
 
     batch_size:
       value: 32
-
-    devices:
-      value: 1
-
+    strategy:
+      value: 'ddp_find_unused_parameters_true'
     precision:
-      values: [32, 16]
+      value: 16
     
     epoch:
-      value: 10
+      value: 1
 
     ckpt:
-<<<<<<< HEAD
-      value: 'ckpt/hubert-large-best/seed0'
-=======
-      value: 'ckpt-hubert-mosei'
+      value: 'ckpt/hubert/test'
 
-    finetune:
-      value: True
->>>>>>> af4bee7 (update gated fusion, dataset)

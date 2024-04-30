@@ -33,12 +33,10 @@ class CREMAD(MultimodalDataset):
             'SAD': 5
         }
         self.video_files = sorted([os.path.join(self.video_dir, video) 
-                                   for video in os.listdir(self.video_dir) 
-                                   if video.endswith('.mp4')])
+                                   for video in os.listdir(self.video_dir)])
         
         self.audio_files = sorted([os.path.join(self.audio_dir, audio) 
-                                   for audio in os.listdir(self.audio_dir) 
-                                   if audio.endswith('.wav')])
+                                   for audio in os.listdir(self.audio_dir)])
         
         assert len(self.video_files) == len(self.audio_files), 'Number of video files and audio files do not match!'
 
