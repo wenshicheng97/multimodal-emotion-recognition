@@ -3,4 +3,14 @@ dataset:
     audio: '/project/msoleyma_1026/AudioWAV'
     video:
       ft: '/project/msoleyma_1026/cropped_face'
+<<<<<<< HEAD
       lp: '/project/msoleyma_1026/marlin_face_base'
+=======
+      lp: '/project/msoleyma_1026/marlin_face_base'
+  mosei:
+    audio: '/project/msoleyma_1026/mosei_edit/audio_seg'
+    video:
+      ft: '/project/msoleyma_1026/mosei_edit/video_seg'
+      lp: ''
+    annotation: '/project/msoleyma_1026/mosei_edit/mosei_label_common.csv'
+>>>>>>> af4bee7 (update gated fusion, dataset)

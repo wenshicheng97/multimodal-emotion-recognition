@@ -35,16 +35,18 @@ parameters:
     batch_size:
       value: 2
     devices:
-      value: 1
+      value: 2
     epoch:
       value: 10
     strategy:
       value: 'ddp_find_unused_parameters_true' # 'ddp'
     precision:
       value: 16
+    marlin_model: 
+      value: 'marlin_vit_base_ytf'
 
     # checkpoint root dir
     ckpt:
-      value: 'ckpt/gated_fusion'
+      value: 'ckpt/gated_fusion_tanh'
 
     

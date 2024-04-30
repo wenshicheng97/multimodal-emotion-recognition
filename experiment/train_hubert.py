@@ -17,7 +17,7 @@ def train_hubert():
 
     seed_everything(hparams.seed)
 
-    train_loader, val_loader, test_loader = get_dataloader('cremad', hparams.batch_size)
+    train_loader, val_loader, test_loader = get_dataloader('mosei', hparams.batch_size, fine_tune=hparams.finetune)
 
     model = HuBERTModule(num_labels=hparams.num_labels,
                          lr=hparams.lr,
@@ -38,15 +38,14 @@ def train_hubert():
     )
 
     # training
-    trainer = pl.Trainer(accelerator = 'gpu', 
-                         max_epochs=hparams.epoch, 
+    trainer = pl.Trainer(max_epochs=hparams.epoch, 
                          logger=wandb_logger, 
-                         devices=hparams.devices, 
                          strategy='ddp_find_unused_parameters_true',
                          callbacks=[checkpoint_callback],
                          num_sanity_val_steps=0,
                          precision=hparams.precision)
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    # trainer.validate(model, dataloaders=val_loader)
 
     wandb.finish()
 

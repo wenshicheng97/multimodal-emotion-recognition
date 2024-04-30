@@ -20,7 +20,7 @@ parameters:
     hidden_size:
       value: 512
     proj_size:
-      value: None
+      value: null
     fine_tune:
       value: True
     marlin_model:

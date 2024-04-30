@@ -64,7 +64,8 @@ class GeneralizedGatedMultimodalUnit(nn.Module):
     def forward(self, *inputs):
         assert len(inputs) == self.modalities, "Number of inputs must match number of modalities"
         
-        transformed = [self.fc_transform[i](inputs[i]) for i in range(self.modalities)]
+        # transformed = [self.fc_transform[i](inputs[i]) for i in range(self.modalities)]
+        transformed = [torch.tanh(self.fc_transform[i](inputs[i])) for i in range(self.modalities)]
         gates = [torch.sigmoid(self.fc_gates[i](inputs[i])) for i in range(self.modalities)]
 
         total_gates = torch.stack(gates, dim=0).sum(dim=0)
@@ -78,7 +79,7 @@ class GeneralizedGatedMultimodalUnit(nn.Module):
 class GatedFusion(nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
-        self.marlin = MarlinModel(fine_tune=kwargs['fine_tune'], proj_size=kwargs['proj_size'])
+        self.marlin = MarlinModel(fine_tune=kwargs['fine_tune'], proj_size=kwargs['proj_size'], marlin_model=kwargs['marlin_model'])
         self.hubert = HubertBase(proj_size=kwargs['proj_size'], freeze=(not kwargs['fine_tune']))
 
         self.fusion_model = GeneralizedGatedMultimodalUnit(dims=[kwargs['proj_size'], kwargs['proj_size']], 

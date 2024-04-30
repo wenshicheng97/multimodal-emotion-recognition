@@ -26,6 +26,7 @@ class HuBERTModule(LightningModule):
         self.save_hyperparameters(ignore=['normalizer'])
         self.feature = 'audio'
         self.hubert = HubertForClassification(num_labels=num_labels)
+        self.num_labels = num_labels
 
         self.lr = lr
         self.weight_decay = weight_decay
@@ -51,20 +52,20 @@ class HuBERTModule(LightningModule):
         return loss
 
     def on_validation_start(self):
-        self.val_accuracy = Accuracy(task="multiclass", num_classes=6).to(self.device)
-        self.val_f1 = F1Score(task="multiclass", num_classes=6).to(self.device)
+        self.val_accuracy = Accuracy(task="multiclass", num_classes=self.num_labels).to(self.device)
+        # self.val_f1 = F1Score(task="multiclass", num_classes=self.num_labels).to(self.device)
 
 
     def validation_step(self, batch, batch_idx):
         y, y_hat = self(batch)
         self.val_accuracy.update(y_hat, y)
-        self.val_f1.update(y_hat, y)
+        # self.val_f1.update(y_hat, y)
 
     def on_validation_epoch_end(self):
         self.log('val_accuracy', self.val_accuracy.compute(), on_epoch=True, sync_dist=True)
-        self.log('val_f1', self.val_f1.compute(), on_epoch=True, sync_dist=True)
+        # self.log('val_f1', self.val_f1.compute(), on_epoch=True, sync_dist=True)
         self.val_accuracy.reset()
-        self.val_f1.reset()
+        # self.val_f1.reset()
 
 
 if __name__ == '__main__':

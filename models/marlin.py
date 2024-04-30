@@ -12,7 +12,7 @@ class MarlinModel(nn.Module):
         super().__init__()
         self.fine_tune = fine_tune
         self.marlin_model = marlin_model
-        self.proj_size = eval(proj_size)
+        self.proj_size = proj_size
 
         if self.fine_tune:
             self.marlin = Marlin.from_online(marlin_model).encoder

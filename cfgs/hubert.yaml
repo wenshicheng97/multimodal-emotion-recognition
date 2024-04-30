@@ -16,7 +16,7 @@ parameters:
   
     # hubert parameters
     num_labels:
-      value: 6
+      value: 7
 
     batch_size:
       value: 32
@@ -31,4 +31,11 @@ parameters:
       value: 10
 
     ckpt:
+<<<<<<< HEAD
       value: 'ckpt/hubert-large-best/seed0'
+=======
+      value: 'ckpt-hubert-mosei'
+
+    finetune:
+      value: True
+>>>>>>> af4bee7 (update gated fusion, dataset)
