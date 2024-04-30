@@ -1,12 +1,11 @@
 method: 'grid'
-
 metric: 
     name: 'val_accuracy'
     goal: 'maximize'   
 
 parameters: 
     seed:
-      value: 42 
+      value: 0
     model:
       value: 'hubert-large'
 
@@ -32,4 +31,4 @@ parameters:
       value: 10
 
     ckpt:
-      value: 'ckpt/hubert-large-best'
+      value: 'ckpt/hubert-large-best/seed0'

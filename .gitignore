@@ -12,5 +12,5 @@ MARLIN/
 hubert/
 .marlin/
 ckpt/
-path.yaml
+*/path.yaml
 playground.py

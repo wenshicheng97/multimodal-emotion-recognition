@@ -24,8 +24,8 @@ def train_hubert():
                          weight_decay=hparams.weight_decay)
 
     # wandb name
-
-    checkpoint_path = f'./ckpt/hubert/lr{hparams.lr}'
+    wandb_logger.experiment.name = f'hubert0-{hparams.lr}'
+    checkpoint_path = f'./{hparams.ckpt}/{hparams.lr}'
     os.makedirs(checkpoint_path, exist_ok=True)
 
     # checkpoint
