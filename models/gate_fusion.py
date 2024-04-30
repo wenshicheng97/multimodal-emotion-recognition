@@ -60,6 +60,8 @@ class GeneralizedGatedMultimodalUnit(nn.Module):
         self.modalities = len(dims)
         self.fc_transform = nn.ModuleList([nn.Linear(dim, dim_out) for dim in dims])
         self.fc_gates = nn.ModuleList([nn.Linear(dim, dim_out) for dim in dims])
+        self.epsilon = 1e-8
+        self.layer_norm = nn.LayerNorm(dim_out)
 
     def forward(self, *inputs):
         assert len(inputs) == self.modalities, "Number of inputs must match number of modalities"
@@ -72,8 +74,12 @@ class GeneralizedGatedMultimodalUnit(nn.Module):
         normalized_gates = [gate / total_gates for gate in gates]
 
         fused_output = torch.stack([normalized_gates[i] * transformed[i] for i in range(self.modalities)], dim=0).sum(dim=0)
+        skip_connection = torch.stack(transformed, dim=0).mean(dim=0)
+        combined_output = fused_output + skip_connection
         
-        return fused_output
+        final_output = self.layer_norm(combined_output)
+        
+        return final_output
     
 
 class GatedFusion(nn.Module):
