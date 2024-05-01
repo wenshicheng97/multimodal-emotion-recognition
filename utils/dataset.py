@@ -165,13 +165,17 @@ class MOSEIDataset(MOSEI):
 
         video = torch.stack(frames_list) / 255
 
-        if video.shape[0] % self.clip_frames != 0:
-            target_frames = video.shape[0] + self.clip_frames - video.shape[0] % self.clip_frames
-            video = padding_video(video, target_frames, "same")
+        # take evenly spaced frames
+        start_idx = 0 if video.shape[0] % self.clip_frames == 0 \
+                    else torch.randint(0, video.shape[0] % self.clip_frames, ())
+        interval = video.shape[0] // self.clip_frames
+
+        # take 32 frames evenly spaced
+        video_indices = torch.arange(start_idx, video.shape[0], interval)[:self.clip_frames]
+        video = video[video_indices]
+        print(f'Video shape: {video.shape}')
+        video = video.reshape(-1, 16, 3, 224, 224).permute(0, 2, 1, 3, 4)
         
-        video = video.reshape(-1, self.clip_frames, 3, 224, 224).permute(0, 2, 1, 3, 4)
-        
-        video = video[::self.temporal_sample_rate]
         num_segments = torch.tensor(video.shape[0], dtype=torch.long)
         
         return {'num_seg': num_segments,
@@ -234,7 +238,7 @@ def get_dataloader(data, batch_size, fine_tune=False):
             video_path = path_config['dataset']['mosei']['video']['ft']
             audio_path = path_config['dataset']['mosei']['audio']
             annotation_file = path_config['dataset']['mosei']['annotation']
-            dataset = MOSEIDataset(video_path, audio_path, annotation_file=annotation_file, clip_frames=16, temporal_sample_rate=3)
+            dataset = MOSEIDataset(video_path, audio_path, annotation_file=annotation_file, clip_frames=32, temporal_sample_rate=3)
             collate_fn = cremad_fine_tune
             
         else:
@@ -258,9 +262,9 @@ def get_dataloader(data, batch_size, fine_tune=False):
 
 
 if __name__ == '__main__':
-    train_loader, val_loader, test_loader = get_dataloader('mosei', 2, fine_tune=True)
+    train_loader, val_loader, test_loader = get_dataloader('mosei', 5, fine_tune=True)
     for batch in tqdm(train_loader):
-        # print(batch['video'].shape, batch['label'], batch['audio'].shape, batch['num_seg'])
-        a = batch['video'][batch['num_seg']]
+        print(batch['video'].shape, batch['label'], batch['audio'].shape, batch['num_seg'])
+        # a = batch['video'][batch['num_seg']]
         # print(a.shape)
-        # break
+        break

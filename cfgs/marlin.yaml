@@ -12,7 +12,7 @@ parameters:
       value: 'MarlinForClassification'
 
     data:
-      value: 'cremad'
+      value: 'mosei'
 
     # optimizer
     lr: 
@@ -27,20 +27,20 @@ parameters:
     fine_tune:
       value: True
     marlin_model:
-      values: ['marlin_vit_base_ytf', 'marlin_vit_large_ytf'] #'marlin_vit_small_ytf'  'marlin_vit_large_ytf'
+      value: 'marlin_vit_small_ytf' #'marlin_vit_base_ytf'  'marlin_vit_large_ytf'
     n_classes:
-      value: 6
+      value: 7
 
     # trainer
     batch_size:
-      value: 2
+      value: 16
     strategy:
       value: 'ddp'
     precision:
       value: 16
     
     epoch:
-      value: 20
+      value: 1
 
     ckpt:
-      value: 'ckpt/marlin_fine_tune'
+      value: 'ckpt/marlin/test'

@@ -24,17 +24,23 @@ class MarlinModel(nn.Module):
         video_x = batch['video']
         if self.fine_tune:
             feat = self.marlin.extract_features(video_x, True)
-            start = 0
-            video_outputs = []
-            
-            for num_seg in batch['num_seg']:
-                end = start + num_seg
-                current_feat = feat[start:end]
-                video_feat = torch.mean(current_feat, dim=0)
-                video_outputs.append(video_feat)
-                start = end
+            num_segs = batch['num_seg']
 
-            video_feat = torch.stack(video_outputs) # (bz, 768)
+            if torch.all(num_segs == num_segs[0]):
+                feat_reshaped = feat.view(-1, num_segs[0], self.EMDED_DIM[self.marlin_model])
+                video_feat = torch.mean(feat_reshaped, dim=1)
+            else:
+                start = 0
+                video_outputs = []
+                
+                for num_seg in num_segs:
+                    end = start + num_seg
+                    current_feat = feat[start:end]
+                    video_feat = torch.mean(current_feat, dim=0)
+                    video_outputs.append(video_feat)
+                    start = end
+
+                video_feat = torch.stack(video_outputs) # (bz, 768)
         else:
             sum_x = video_x.sum(dim=1)
             video_feat = sum_x / batch['seq_length'].unsqueeze(1).float()
