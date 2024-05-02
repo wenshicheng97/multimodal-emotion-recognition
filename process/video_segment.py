@@ -40,8 +40,6 @@ def segment_from_transcript(text_dir, video_dir, output_dir):
             status_code = segment_video(video_name, start, end, video_segname)
             if status_code ==1:
                 print(file_id + "_" + str(seg_num))
-        print(file_id)
-
 
 
 if __name__ == '__main__':
