@@ -8,6 +8,6 @@ dataset:
     audio: '/project/msoleyma_1026/mosei_edit/audio_seg'
     video:
       ft: '/project/msoleyma_1026/mosei_edit/video_seg'
-      lp: ''
+      lp: '/project/msoleyma_1026/mosei_edit/marlin_feat'
     annotation: '/project/msoleyma_1026/mosei_edit/mosei_label_common.csv'
 

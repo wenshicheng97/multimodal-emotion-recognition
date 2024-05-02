@@ -7,7 +7,7 @@ from utils.dataset import get_dataloader
 
 from utils.name import get_search_hparams, get_experiment_name
 
-from lightning_module import ExperimentModule
+from experiment.lightning_module import ExperimentModule
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -55,7 +55,8 @@ def train():
                          callbacks=[checkpoint_callback, checkpoint_callback_every_n],
                          num_sanity_val_steps=0,
                          precision=hparams.precision)
-    trainer.fit(model, train_dataloaders=val_loader, val_dataloaders=val_loader)
+    
+    trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
     # trainer.validate(model, dataloaders=val_loader)
 
     wandb.finish()

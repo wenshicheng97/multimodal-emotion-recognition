@@ -16,7 +16,7 @@ parameters:
 
     # optimizer
     lr: 
-      values: [3e-4, 3e-5]
+      value: 3e-4
     weight_decay: 
       value: 1e-5
 
@@ -33,7 +33,7 @@ parameters:
 
     # trainer
     batch_size:
-      value: 16
+      value: 8
     strategy:
       value: 'ddp'
     precision:
