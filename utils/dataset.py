@@ -195,7 +195,7 @@ class MOSEIFeatures(MOSEI):
         audio, label = super().__getitem__(index)
 
         # process video
-        video_path = self.video_files[index]
+        video_path = os.path.join(self.video_dir, self.file_names[index]+'.npz')
         video = np.load(video_path)['features']
         video = torch.tensor(video, dtype=torch.float32)
         video_seq_length = video.shape[0]
