@@ -20,7 +20,7 @@ def text_tokenize(text_path, file_name, processor):
     text_file = pd.read_csv(text_path)
     text_seg = text_file[text_file["name"] == file_name]["text"].to_list()[0]
     inputs = processor.encode(text_seg, padding = "longest", return_tensors="pt")
-    return inputs
+    return inputs.squeeze(0)
 
 
 def read_video(path: str, channel_first: bool = True):
