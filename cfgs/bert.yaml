@@ -1,0 +1,39 @@
+method: 'grid'
+name: 'hubert'
+metric: 
+    name: 'val_accuracy'
+    goal: 'maximize'   
+
+parameters: 
+    seed:
+      value: 0
+    model:
+      value: 'BertForClassification'
+    data:
+      value: 'mosei'
+
+    # optimizer
+    lr: 
+      values: [5e-5, 3e-5]
+    weight_decay: 
+      value: 1e-5
+  
+    # bert parameters
+    n_classes:
+      value: 6
+    fine_tune:
+      value: True
+
+    batch_size:
+      value: 32
+    strategy:
+      value: 'ddp_find_unused_parameters_true'
+    precision:
+      value: 16
+    
+    epoch:
+      value: 1
+
+    ckpt:
+      value: 'ckpt/bert/test'
+

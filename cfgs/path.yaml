@@ -9,5 +9,6 @@ dataset:
     video:
       ft: '/project/msoleyma_1026/mosei_edit/video_seg'
       lp: '/project/msoleyma_1026/mosei_edit/marlin_feat'
+    text: '/project/msoleyma_1026/mosei_edit/segmented_transcript.csv'
     annotation: '/project/msoleyma_1026/mosei_edit/mosei_label_common.csv'
 

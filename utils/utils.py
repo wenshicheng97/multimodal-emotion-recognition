@@ -3,6 +3,7 @@ from torch.nn.utils.rnn import pad_sequence
 from einops import rearrange
 from torch.nn import functional as F
 from torchaudio.sox_effects import apply_effects_file
+import pandas as pd
 
 
 def audio_extraction(audio_path, processor):
@@ -14,6 +15,12 @@ def audio_extraction(audio_path, processor):
     waveform, sample_rate = apply_effects_file(audio_path, effects=[["rate", "16000"]])
     inputs = processor(waveform.squeeze(0), sampling_rate=16000, return_tensors="pt", padding="longest", truncation=True, max_length=96000)
     return inputs.input_values.squeeze(0)
+
+def text_tokenize(text_path, file_name, processor):
+    text_file = pd.read_csv(text_path)
+    text_seg = text_file[text_file["name"] == file_name]["text"].to_list()[0]
+    inputs = processor.encode(text_seg, padding = "longest", return_tensors="pt")
+    return inputs
 
 
 def read_video(path: str, channel_first: bool = True):

@@ -2,8 +2,8 @@ import torch, torchvision, os, yaml
 from torch.utils.data import Dataset, DataLoader, Subset, random_split
 from torch.nn.utils.rnn import pad_sequence
 import numpy as np
-from utils.utils import audio_extraction, padding_video
-from transformers import Wav2Vec2Processor
+from utils.utils import audio_extraction, padding_video, text_tokenize
+from transformers import Wav2Vec2Processor, BertTokenizerFast
 import pandas as pd
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
@@ -12,17 +12,17 @@ class MultimodalDataset(Dataset):
     def __init__(self,
                  video_dir: str,
                  audio_dir: str,
-                 audio_processor = "facebook/hubert-large-ls960-ft"):
+                 audio_pretrained = "facebook/hubert-large-ls960-ft"):
         super().__init__()
         self.video_dir = video_dir
         self.audio_dir = audio_dir
 
-        self.processor = Wav2Vec2Processor.from_pretrained(audio_processor)
+        self.audio_processor = Wav2Vec2Processor.from_pretrained(audio_pretrained)
     
 
 class CREMAD(MultimodalDataset):
-    def __init__(self, video_dir: str, audio_dir: str, audio_processor="facebook/hubert-large-ls960-ft"):
-        super().__init__(video_dir, audio_dir, audio_processor)
+    def __init__(self, video_dir: str, audio_dir: str, audio_pretrained="facebook/hubert-large-ls960-ft"):
+        super().__init__(video_dir, audio_dir, audio_pretrained)
         self.emotion_dict = {
             'ANG': 0,
             'DIS': 1,
@@ -50,7 +50,7 @@ class CREMAD(MultimodalDataset):
 
         # process audio
         audio_path = self.audio_files[index]
-        audio = audio_extraction(audio_path, self.processor)
+        audio = audio_extraction(audio_path, self.audio_processor)
 
         return audio, label
     
@@ -62,8 +62,8 @@ class CREMADDataset(CREMAD):
                  audio_dir: str,
                  clip_frames: int,
                  temporal_sample_rate: int,
-                 audio_processor="facebook/hubert-large-ls960-ft"):
-        super().__init__(video_dir, audio_dir, audio_processor)
+                 audio_pretrained="facebook/hubert-large-ls960-ft"):
+        super().__init__(video_dir, audio_dir, audio_pretrained)
         self.clip_frames = clip_frames
         self.temporal_sample_rate = temporal_sample_rate
 
@@ -100,8 +100,8 @@ class CREMADDataset(CREMAD):
 class CREMADFeatures(CREMAD):
     def __init__(self, video_dir: str, 
                  audio_dir: str, 
-                 audio_processor="facebook/hubert-large-ls960-ft"):
-        super().__init__(video_dir, audio_dir, audio_processor)
+                 audio_pretrained="facebook/hubert-large-ls960-ft"):
+        super().__init__(video_dir, audio_dir, audio_pretrained)
 
     def __getitem__(self, index: int):
         audio, label = super().__getitem__(index)
@@ -121,12 +121,15 @@ class CREMADFeatures(CREMAD):
 class MOSEI(MultimodalDataset):
     def __init__(self, video_dir: str, 
                  audio_dir: str,
+                 text_file: str,
                  annotation_file: str,
-                 audio_processor="facebook/hubert-large-ls960-ft"):
-        super().__init__(video_dir, audio_dir, audio_processor)
+                 audio_pretrained="facebook/hubert-large-ls960-ft",
+                 text_pretrained="bert-base-uncased"):
+        super().__init__(video_dir, audio_dir, audio_pretrained)
         annotations = pd.read_csv(annotation_file, dtype={'name': str})
         self.file_names = annotations['name'].values.tolist()
         self.labels = annotations['label'].values.tolist()
+        self.text_processor = BertTokenizerFast.from_pretrained(text_pretrained)
 
     def __len__(self):
         return len(self.labels)
@@ -136,22 +139,26 @@ class MOSEI(MultimodalDataset):
         label = torch.tensor(label, dtype=torch.long)
 
         audio_path = os.path.join(self.audio_dir, self.file_names[index]+'.wav')
-        audio = audio_extraction(audio_path, self.processor)
+        audio = audio_extraction(audio_path, self.audio_processor)
 
-        return audio, label
+        text = text_tokenize(text_file, self.file_names[index], self.text_processor)
+
+        return audio, text, label
     
 
 class MOSEIDataset(MOSEI):
     def __init__(self, video_dir: str, 
-                 audio_dir: str, 
+                 audio_dir: str,
+                 text_file: str,
                  annotation_file: str,
                  clip_frames: int,
-                 audio_processor="facebook/hubert-large-ls960-ft"):
-        super().__init__(video_dir, audio_dir, annotation_file, audio_processor)
+                 audio_pretrained="facebook/hubert-large-ls960-ft",
+                 text_pretrained="bert-base-uncased"):
+        super().__init__(video_dir, audio_dir, text_file, annotation_file, audio_pretrained, text_pretrained)
         self.clip_frames = clip_frames
 
     def __getitem__(self, index: int):
-        audio, label = super().__getitem__(index)
+        audio, text, label = super().__getitem__(index)
 
         video_path = os.path.join(self.video_dir, self.file_names[index]+'.mp4')
         reader = torchvision.io.VideoReader(video_path)
@@ -181,18 +188,21 @@ class MOSEIDataset(MOSEI):
         return {'num_seg': num_segments,
                 'video': video, 
                 'audio': audio, 
+                'text': text,
                 'label': label}
     
 
 class MOSEIFeatures(MOSEI):
     def __init__(self, video_dir: str, 
-                 audio_dir: str, 
+                 audio_dir: str,
+                 text_file: str,
                  annotation_file: str,
-                 audio_processor="facebook/hubert-large-ls960-ft"):
-        super().__init__(video_dir, audio_dir, annotation_file, audio_processor)
+                 audio_pretrained="facebook/hubert-large-ls960-ft",
+                 text_pretrained="bert-base-uncased"):
+        super().__init__(video_dir, audio_dir, text_file, annotation_file, audio_pretrained, text_pretrained)
 
     def __getitem__(self, index: int):
-        audio, label = super().__getitem__(index)
+        audio, text, label = super().__getitem__(index)
 
         # process video
         video_path = os.path.join(self.video_dir, self.file_names[index]+'.npz')
@@ -202,6 +212,7 @@ class MOSEIFeatures(MOSEI):
 
         return {'video': video, 
                 'audio': audio, 
+                'text': text,
                 'seq_length': torch.tensor(video_seq_length, dtype=torch.long),
                 'label': label}
 
@@ -229,6 +240,32 @@ def cremad_linear_probing(batch):
             'seq_length': torch.tensor(seq_length, dtype=torch.long), 
             'label': torch.tensor(label, dtype=torch.long)}
 
+def mosei_fine_tune(batch):
+    num_seg = [item['num_seg'] for item in batch]
+    video = [item['video'] for item in batch]
+    audio = pad_sequence([item['audio'] for item in batch], batch_first=True)
+    text = pad_sequence([item['text'] for item in batch], batch_first=True)
+    label = [item['label'] for item in batch]
+
+    return {'num_seg': torch.tensor(num_seg, dtype=torch.long),
+            'video': torch.cat(video, dim=0), 
+            'audio': audio, 
+            'text': text,
+            'label': torch.tensor(label, dtype=torch.long)}
+
+
+def mosei_linear_probing(batch):
+    video = pad_sequence([item['video'] for item in batch], batch_first=True)
+    audio = pad_sequence([item['audio'] for item in batch], batch_first=True)
+    text = pad_sequence([item['text'] for item in batch], batch_first=True)
+    seq_length = [item['seq_length'] for item in batch]
+    label = [item['label'] for item in batch]
+
+    return {'video': video,
+            'audio': audio, 
+            'text': text,
+            'seq_length': torch.tensor(seq_length, dtype=torch.long), 
+            'label': torch.tensor(label, dtype=torch.long)}
 
 def get_dataloader(data, batch_size, fine_tune=False):
     with open('cfgs/path.yaml', 'r') as f:
@@ -261,14 +298,16 @@ def get_dataloader(data, batch_size, fine_tune=False):
         if fine_tune:
             video_path = path_config['dataset']['mosei']['video']['ft']
             audio_path = path_config['dataset']['mosei']['audio']
-            dataset = MOSEIDataset(video_path, audio_path, annotation_file=annotation_file, clip_frames=32)
-            collate_fn = cremad_fine_tune
+            text_path = path_config['dataset']['mosei']['text']
+            dataset = MOSEIDataset(video_path, audio_path, text_path, annotation_file=annotation_file, clip_frames=32)
+            collate_fn = mosei_fine_tune
             
         else:
             video_path = path_config['dataset']['mosei']['video']['lp']
             audio_path = path_config['dataset']['mosei']['audio']
-            dataset = MOSEIFeatures(video_path, audio_path, annotation_file=annotation_file)
-            collate_fn = cremad_linear_probing
+            text_path = path_config['dataset']['mosei']['text']
+            dataset = MOSEIFeatures(video_path, audio_path, text_path, annotation_file=annotation_file)
+            collate_fn = mosei_linear_probing
 
         # split videos with different people into train and val
         # and make sure label balance
