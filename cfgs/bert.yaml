@@ -1,5 +1,5 @@
 method: 'grid'
-name: 'hubert'
+name: 'bert'
 metric: 
     name: 'val_accuracy'
     goal: 'maximize'   
@@ -20,20 +20,20 @@ parameters:
   
     # bert parameters
     n_classes:
-      value: 6
+      value: 7
     fine_tune:
-      value: True
+      values: [True, False]
 
     batch_size:
       value: 32
     strategy:
       value: 'ddp_find_unused_parameters_true'
     precision:
-      value: 16
+      value: 32
     
     epoch:
-      value: 1
+      value: 20
 
     ckpt:
-      value: 'ckpt/bert/test'
+      value: 'ckpt/bert'
 

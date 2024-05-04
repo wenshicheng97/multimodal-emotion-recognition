@@ -4,7 +4,7 @@ import torch, torchvision, os, yaml
 from torch.utils.data import Dataset, DataLoader, Subset, random_split
 from torch.nn.utils.rnn import pad_sequence
 import numpy as np
-from utils import audio_extraction, padding_video, text_tokenize
+from utils.utils import audio_extraction, padding_video, text_tokenize
 from transformers import Wav2Vec2Processor, BertTokenizerFast
 import pandas as pd
 from tqdm import tqdm
@@ -337,21 +337,22 @@ def get_dataloader(data, batch_size, fine_tune=False):
 
 
 if __name__ == '__main__':
-    # train_loader, val_loader, test_loader = get_dataloader('mosei', 5, fine_tune=False)
-    # for batch in tqdm(train_loader):
-    #     print(batch['video'].shape, batch['label'], batch['audio'].shape, batch['text'].shape, batch['seq_length'])
-    #     # a = batch['video'][batch['num_seg']]
-    #     # print(a.shape)
-    #     break
-    # video_path = '/project/msoleyma_1026/mosei_edit/video_seg/154449_0.mp4'
-    # reader = torchvision.io.VideoReader(video_path)
-    # frames_list = []
+    train_loader, val_loader, test_loader = get_dataloader('mosei', 5, fine_tune=False)
+    for batch in tqdm(train_loader):
+        print(batch['video'].shape, batch['label'], batch['audio'].shape, batch['text'].shape, batch['seq_length'])
+        # a = batch['video'][batch['num_seg']]
+        # print(a.shape)
+        break
+    video_path = '/project/msoleyma_1026/mosei_edit/video_seg/154449_0.mp4'
+    reader = torchvision.io.VideoReader(video_path)
+    frames_list = []
 
-    # for frame in reader:
-    #     frames_list.append(frame['data'])
+    for frame in reader:
+        frames_list.append(frame['data'])
 
-    # video = torch.stack(frames_list) / 255
-    # print(video.shape)
-    # target_frames = 32 
-    # video = padding_video(video, target_frames, "same")
-    # print(video.shape)
+    video = torch.stack(frames_list) / 255
+    print(video.shape)
+    target_frames = 32 
+    video = padding_video(video, target_frames, "same")
+    print(video.shape)
+    # pass

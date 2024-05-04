@@ -8,7 +8,7 @@ class BertBase(nn.Module):
         self.bert = BertModel.from_pretrained('bert-base-uncased')
         self.hidden_size = self.bert.config.hidden_size
         self.hidden_dropout_prob = self.bert.config.hidden_dropout_prob
-        self._init_weights()
+        # self._init_weights()
         self.freeze = freeze
 
     def _init_weights(self, module):
@@ -22,17 +22,24 @@ class BertBase(nn.Module):
                 outputs = self.bert(input_values)
         else:
             outputs = self.bert(input_values)
-        hidden_states = outputs[0]
-        return hidden_states.mean(dim=1)
+        hidden_states = outputs.last_hidden_state[:,0,:]
+        # print(hidden_states.shape)
+        return hidden_states
     
     
 class BertForClassification(nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
         self.bert = BertBase(not kwargs['fine_tune'])
-        self.dropout = nn.Dropout(self.bert.hidden_dropout_prob)
-        self.classifier = nn.Linear(self.bert.hidden_size, kwargs['n_classes'])
-        self._init_weights(self.classifier)
+        ln = nn.Linear(self.bert.hidden_size, kwargs['n_classes'])
+        self._init_weights(ln)
+        self.classifier = nn.Sequential(
+            nn.Dropout(self.bert.hidden_dropout_prob),
+            ln
+        )
+        # self.dropout = nn.Dropout(self.bert.hidden_dropout_prob)
+        # self.classifier = nn.Linear(self.bert.hidden_size, kwargs['n_classes'])
+        # self._init_weights(self.classifier)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):

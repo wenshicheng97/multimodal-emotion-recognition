@@ -10,6 +10,7 @@ from models.marlin import MarlinForClassification
 from models.hubert import HubertForClassification
 from models.early_fusion import EarlyFusion
 from models.lstm import LSTMModel
+from models.bert import BertForClassification
 
 class ExperimentModule(LightningModule):
 
