@@ -10,7 +10,7 @@ parameters:
     model:
       value: 'HubertForClassification'
     data:
-      value: 'cremad'
+      value: 'mosei'
 
     # optimizer
     lr: 
@@ -20,7 +20,7 @@ parameters:
   
     # hubert parameters
     n_classes:
-      value: 6
+      value: 7
     proj_size:
       value: null
     fine_tune:
@@ -37,5 +37,5 @@ parameters:
       value: 1
 
     ckpt:
-      value: 'ckpt/hubert/test'
+      value: 'ckpt/hubert_mosei'
 
