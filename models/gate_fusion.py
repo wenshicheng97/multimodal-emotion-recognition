@@ -89,7 +89,7 @@ class GatedFusion(nn.Module):
         self.marlin = MarlinModel(fine_tune=kwargs['fine_tune'], proj_size=kwargs['proj_size'], marlin_model=kwargs['marlin_model'])
         self.hubert = HubertBase(proj_size=kwargs['proj_size'], freeze=(not kwargs['fine_tune']))
         if kwargs['data'] == 'mosei':
-            self.bert = BertBase(freeze=(not kwargs['fine_tune']))
+            self.bert = BertBase(proj_size=kwargs['proj_size'], freeze=(not kwargs['fine_tune']))
 
         self.fusion_model = GeneralizedGatedMultimodalUnit(dims=[kwargs['proj_size'], kwargs['proj_size']], 
                                                      dim_out=kwargs['dim_out'])

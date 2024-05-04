@@ -11,4 +11,6 @@ dataset:
       lp: '/project/msoleyma_1026/mosei_edit/marlin_feat'
     text: '/project/msoleyma_1026/mosei_edit/segmented_transcript.csv'
     annotation: '/project/msoleyma_1026/mosei_edit/mosei_label_common.csv'
+    openface: '/project/msoleyma_1026/mosei_edit/MOSEI_openface'
+    spectrogram: '/project/msoleyma_1026/mosei_edit/spectrogram'
 

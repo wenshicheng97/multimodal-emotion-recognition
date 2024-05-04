@@ -3,13 +3,17 @@ import torch.nn as nn
 from transformers import BertModel
 
 class BertBase(nn.Module):
-    def __init__(self, freeze=False):
+    def __init__(self, proj_size=None, freeze=False):
         super().__init__()
         self.bert = BertModel.from_pretrained('bert-base-uncased')
         self.hidden_size = self.bert.config.hidden_size
         self.hidden_dropout_prob = self.bert.config.hidden_dropout_prob
         # self._init_weights()
         self.freeze = freeze
+
+        if proj_size:
+            self.projector = nn.Linear(self.hidden_size, proj_size)
+            self._init_weights(self.projection)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -23,7 +27,10 @@ class BertBase(nn.Module):
         else:
             outputs = self.bert(input_values)
         hidden_states = outputs.last_hidden_state[:,0,:]
-        # print(hidden_states.shape)
+
+        if hasattr(self, 'projector'):
+            hidden_states = self.projector(hidden_states)
+
         return hidden_states
     
     
