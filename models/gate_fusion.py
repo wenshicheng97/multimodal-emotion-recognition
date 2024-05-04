@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.hubert import HubertBase
 from models.marlin import MarlinModel
+from models.bert import BertBase
 
 
 class BimodalGatedMultimodalUnit(nn.Module):
@@ -87,6 +88,8 @@ class GatedFusion(nn.Module):
         super().__init__()
         self.marlin = MarlinModel(fine_tune=kwargs['fine_tune'], proj_size=kwargs['proj_size'], marlin_model=kwargs['marlin_model'])
         self.hubert = HubertBase(proj_size=kwargs['proj_size'], freeze=(not kwargs['fine_tune']))
+        if kwargs['data'] == 'mosei':
+            self.bert = BertBase(freeze=(not kwargs['fine_tune']))
 
         self.fusion_model = GeneralizedGatedMultimodalUnit(dims=[kwargs['proj_size'], kwargs['proj_size']], 
                                                      dim_out=kwargs['dim_out'])
@@ -97,10 +100,15 @@ class GatedFusion(nn.Module):
         )
 
     def forward(self, batch):
-        # video
         video_feat = self.marlin(batch) # (bz, 256)
 
         audio_feat = self.hubert(batch['audio']) # (bz, 256)
 
-        fused_output = self.fusion_model(video_feat, audio_feat)
+        input = [video_feat, audio_feat]
+        if hasattr(self, 'bert'):
+            text_feat = self.bert(batch['text'])
+            input.append(text_feat)
+        
+        fused_output = self.fusion_model(**input)
+
         return self.classifier(fused_output)
