@@ -11,6 +11,9 @@ parameters:
     model:
       value: 'GatedFusion'
 
+    data:
+      value: 'mosei'
+
     # optimizer
     lr: 
       values: [3e-5, 3e-4]
@@ -21,7 +24,7 @@ parameters:
     dim_out:
       value: 256
     n_classes:
-      value: 6
+      value: 7
     input_size:
       value: 512
     hidden_size:
@@ -36,10 +39,8 @@ parameters:
     # trainer hparams
     batch_size:
       value: 2
-    devices:
-      value: 2
     epoch:
-      value: 10
+      value: 20
     strategy:
       value: 'ddp_find_unused_parameters_true' # 'ddp'
     precision:
@@ -48,6 +49,6 @@ parameters:
 
     # checkpoint root dir
     ckpt:
-      value: 'ckpt/gated_fusion_tanh'
+      value: 'ckpt/mosei/gated_fusion_tanh_skip_0'
 
     

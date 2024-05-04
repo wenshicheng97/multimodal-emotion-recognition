@@ -1,7 +1,7 @@
 # import os
 # os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import torch, torchvision, os, yaml
-from torch.utils.data import Dataset, DataLoader, Subset, random_split
+from torch.utils.data import Dataset, DataLoader, Subset, random_split, WeightedRandomSampler
 from torch.nn.utils.rnn import pad_sequence
 import numpy as np
 from utils.utils import audio_extraction, padding_video, text_tokenize
@@ -217,6 +217,42 @@ class MOSEIFeatures(MOSEI):
                 'text': text,
                 'seq_length': torch.tensor(video_seq_length, dtype=torch.long),
                 'label': label}
+    
+
+class MOSEILSTM(Dataset):
+    def __init__(self, openface_dir: str,
+                 spectrogram_dir: str,
+                 annotation_file: str):
+        annotations = pd.read_csv(annotation_file, dtype={'name': str})
+        self.file_names = annotations['name'].values.tolist()
+        self.labels = annotations['label'].values.tolist()
+        self.openface_dir = openface_dir
+        self.spectrogram_dir = spectrogram_dir
+
+    def __len__(self):
+        return len(self.labels)
+    
+    def __getitem__(self, index: int):
+        label = self.labels[index]
+        label = torch.tensor(label, dtype=torch.long)
+
+        openface_path = os.path.join(self.openface_dir, self.file_names[index]+'.csv')
+        openface = pd.read_csv(openface_path)
+        au17_indices = [f' AU{i:02d}_r' for i in [1,2,4,5,6,7,9,10,12,14,15,17,20,23,25,26,45]]
+        au18_indices = [f' AU{i:02d}_c' for i in [1,2,4,5,6,7,9,10,12,14,15,17,20,23,25,26,28,45]]
+
+        au17 = torch.tensor(openface[au17_indices].values)
+        au18 = torch.tensor(openface[au18_indices].values)
+
+        # spectrogram_path = os.path.join(self.spectrogram_dir, self.file_names[index]+'.npz')
+        # spectrogram = np.load(spectrogram_path)['audio']
+        # spectrogram = torch.tensor(spectrogram, dtype=torch.float32)
+
+        return {'au17': au17,
+                'au18': au18,
+                #'spectrogram': spectrogram,
+                'label': label}
+
 
     
 def cremad_fine_tune(batch):
@@ -269,7 +305,20 @@ def mosei_linear_probing(batch):
             'seq_length': torch.tensor(seq_length, dtype=torch.long), 
             'label': torch.tensor(label, dtype=torch.long)}
 
-def get_dataloader(data, batch_size, fine_tune=False):
+
+def mosei_lstm(batch):
+    au17 = pad_sequence([item['au17'] for item in batch], batch_first=True)
+    au18 = pad_sequence([item['au18'] for item in batch], batch_first=True)
+    #spectrogram = pad_sequence([item['spectrogram'] for item in batch], batch_first=True)
+    label = [item['label'] for item in batch]
+
+    return {'au17': au17,
+            'au18': au18,
+            #'spectrogram': spectrogram,
+            'label': torch.tensor(label, dtype=torch.long)}
+
+
+def get_dataloader(data, batch_size, fine_tune=False, lstm=False):
     with open('cfgs/path.yaml', 'r') as f:
         path_config = yaml.safe_load(f)
 
@@ -297,19 +346,25 @@ def get_dataloader(data, batch_size, fine_tune=False):
 
     elif data == 'mosei':
         annotation_file = path_config['dataset']['mosei']['annotation']
-        if fine_tune:
-            video_path = path_config['dataset']['mosei']['video']['ft']
-            audio_path = path_config['dataset']['mosei']['audio']
-            text_path = path_config['dataset']['mosei']['text']
-            dataset = MOSEIDataset(video_path, audio_path, text_path, annotation_file=annotation_file, clip_frames=32)
-            collate_fn = mosei_fine_tune
-            
+        if lstm:
+            openface_dir = path_config['dataset']['mosei']['openface']
+            spectrogram_dir = path_config['dataset']['mosei']['spectrogram']
+            dataset = MOSEILSTM(openface_dir, spectrogram_dir, annotation_file)
+            collate_fn = mosei_lstm
         else:
-            video_path = path_config['dataset']['mosei']['video']['lp']
-            audio_path = path_config['dataset']['mosei']['audio']
-            text_path = path_config['dataset']['mosei']['text']
-            dataset = MOSEIFeatures(video_path, audio_path, text_path, annotation_file=annotation_file)
-            collate_fn = mosei_linear_probing
+            if fine_tune:
+                video_path = path_config['dataset']['mosei']['video']['ft']
+                audio_path = path_config['dataset']['mosei']['audio']
+                text_path = path_config['dataset']['mosei']['text']
+                dataset = MOSEIDataset(video_path, audio_path, text_path, annotation_file=annotation_file, clip_frames=32)
+                collate_fn = mosei_fine_tune
+                
+            else:
+                video_path = path_config['dataset']['mosei']['video']['lp']
+                audio_path = path_config['dataset']['mosei']['audio']
+                text_path = path_config['dataset']['mosei']['text']
+                dataset = MOSEIFeatures(video_path, audio_path, text_path, annotation_file=annotation_file)
+                collate_fn = mosei_linear_probing
 
         # split videos with different people into train and val
         # and make sure label balance
@@ -328,31 +383,24 @@ def get_dataloader(data, batch_size, fine_tune=False):
 
         train_dataset, val_dataset = Subset(dataset, train_indices), Subset(dataset, val_indices)
 
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2, collate_fn=collate_fn)
+        # handle data imbalance
+        class_sample_counts = torch.bincount(torch.tensor(dataset.labels))
+        weights = 1. / class_sample_counts[dataset.labels]
+        sampler = WeightedRandomSampler(weights=weights, num_samples=len(weights), replacement=True)
+
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2, collate_fn=collate_fn, sampler=sampler)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=collate_fn)
-        test_loader = DataLoader(val_loader, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=collate_fn)
+        test_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=collate_fn)
 
     return train_loader, val_loader, test_loader
 
 
 
 if __name__ == '__main__':
-    train_loader, val_loader, test_loader = get_dataloader('mosei', 5, fine_tune=False)
+    train_loader, val_loader, test_loader = get_dataloader('mosei', 5, fine_tune=False, lstm=True)
     for batch in tqdm(train_loader):
-        print(batch['video'].shape, batch['label'], batch['audio'].shape, batch['text'].shape, batch['seq_length'])
-        # a = batch['video'][batch['num_seg']]
-        # print(a.shape)
+        print(batch['au17'].shape)
+        print(batch['au18'].shape)
+        #print(batch['spectrogram'].shape)
+        print(batch['label'])
         break
-    video_path = '/project/msoleyma_1026/mosei_edit/video_seg/154449_0.mp4'
-    reader = torchvision.io.VideoReader(video_path)
-    frames_list = []
-
-    for frame in reader:
-        frames_list.append(frame['data'])
-
-    video = torch.stack(frames_list) / 255
-    print(video.shape)
-    target_frames = 32 
-    video = padding_video(video, target_frames, "same")
-    print(video.shape)
-    # pass
