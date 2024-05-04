@@ -58,7 +58,6 @@ def train():
                          precision=hparams.precision)
     
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
-    #trainer.validate(model, dataloaders=val_loader)
 
 def get_args():
     parser = argparse.ArgumentParser()
