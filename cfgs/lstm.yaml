@@ -11,7 +11,9 @@ parameters:
     model:
       value: 'LSTMModel'
     data:
-      value: 'cremad'
+      value: 'mosei'
+    fine_tune:
+      value: False
 
     # optimizer parameters
     lr: 
@@ -20,12 +22,14 @@ parameters:
       value: 1e-5
   
     # lstm parameters
+    feature:
+      value: 'au17'
     input_size:
       value: 17
     hidden_size:
       value: 128
     n_classes:
-      value: 6
+      value: 7
 
     # trainer
     batch_size:

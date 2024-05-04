@@ -20,7 +20,8 @@ def train():
 
     train_loader, val_loader, test_loader = get_dataloader(data=hparams.data, 
                                                            batch_size=hparams.batch_size,
-                                                           fine_tune=hparams.fine_tune)
+                                                           fine_tune=hparams.fine_tune,
+                                                           lstm=args.lstm)
 
     model = ExperimentModule(**hparams)
 
@@ -56,13 +57,14 @@ def train():
                          num_sanity_val_steps=0,
                          precision=hparams.precision)
     
-    # trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
-    trainer.validate(model, dataloaders=val_loader)
+    trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    #trainer.validate(model, dataloaders=val_loader)
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment', '-e', type=str)
     parser.add_argument('--sweep_name', type=str)
+    parser.add_argument('--lstm', action='store_true', default=False)
 
     return parser.parse_args()
 

@@ -244,13 +244,13 @@ class MOSEILSTM(Dataset):
         au17 = torch.tensor(openface[au17_indices].values)
         au18 = torch.tensor(openface[au18_indices].values)
 
-        # spectrogram_path = os.path.join(self.spectrogram_dir, self.file_names[index]+'.npz')
-        # spectrogram = np.load(spectrogram_path)['audio']
-        # spectrogram = torch.tensor(spectrogram, dtype=torch.float32)
+        spectrogram_path = os.path.join(self.spectrogram_dir, self.file_names[index]+'.npy')
+        spectrogram = np.load(spectrogram_path)
+        spectrogram = torch.tensor(spectrogram, dtype=torch.float32)
 
         return {'au17': au17,
                 'au18': au18,
-                #'spectrogram': spectrogram,
+                'spectrogram': spectrogram,
                 'label': label}
 
 
@@ -309,12 +309,12 @@ def mosei_linear_probing(batch):
 def mosei_lstm(batch):
     au17 = pad_sequence([item['au17'] for item in batch], batch_first=True)
     au18 = pad_sequence([item['au18'] for item in batch], batch_first=True)
-    #spectrogram = pad_sequence([item['spectrogram'] for item in batch], batch_first=True)
+    spectrogram = pad_sequence([item['spectrogram'] for item in batch], batch_first=True)
     label = [item['label'] for item in batch]
 
     return {'au17': au17,
             'au18': au18,
-            #'spectrogram': spectrogram,
+            'spectrogram': spectrogram,
             'label': torch.tensor(label, dtype=torch.long)}
 
 
@@ -384,11 +384,12 @@ def get_dataloader(data, batch_size, fine_tune=False, lstm=False):
         train_dataset, val_dataset = Subset(dataset, train_indices), Subset(dataset, val_indices)
 
         # handle data imbalance
-        class_sample_counts = torch.bincount(torch.tensor(dataset.labels))
-        weights = 1. / class_sample_counts[dataset.labels]
+        train_labels = [dataset.labels[i] for i in train_indices]
+        class_sample_counts = torch.bincount(torch.tensor(train_labels))
+        weights = 1 / class_sample_counts[train_labels]
         sampler = WeightedRandomSampler(weights=weights, num_samples=len(weights), replacement=True)
 
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2, collate_fn=collate_fn, sampler=sampler)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=collate_fn, sampler=sampler)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=collate_fn)
         test_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, collate_fn=collate_fn)
 
@@ -397,10 +398,10 @@ def get_dataloader(data, batch_size, fine_tune=False, lstm=False):
 
 
 if __name__ == '__main__':
-    train_loader, val_loader, test_loader = get_dataloader('mosei', 5, fine_tune=False, lstm=True)
+    train_loader, val_loader, test_loader = get_dataloader('mosei', 32, fine_tune=False, lstm=True)
     for batch in tqdm(train_loader):
-        print(batch['au17'].shape)
-        print(batch['au18'].shape)
-        #print(batch['spectrogram'].shape)
-        print(batch['label'])
-        break
+        pass
+        # print(batch['au17'].shape)
+        # print(batch['au18'].shape)
+        # print(batch['spectrogram'].shape)
+        # print(batch['label'])
