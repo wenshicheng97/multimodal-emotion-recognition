@@ -424,4 +424,3 @@ def get_dataloader(data, batch_size, fine_tune=False, lstm=False):
     # video = padding_video(video, target_frames, "same")
     # print(video.shape)
     # pass
->>>>>>> Stashed changes
