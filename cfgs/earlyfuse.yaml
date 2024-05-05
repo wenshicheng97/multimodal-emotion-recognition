@@ -22,7 +22,7 @@ parameters:
     n_classes:
       value: 7
     input_size:
-      value: 512
+      value: 768
     hidden_size:
       value: 256
     proj_size:
