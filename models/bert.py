@@ -21,7 +21,7 @@ class BertBase(nn.Module):
             nn.init.zeros_(module.bias)
 
     def forward(self, input_values):
-        attention_mask = (input_values > 0).int()
+        attention_mask = (input_values != 0).long()
         if self.freeze:
             with torch.no_grad():
                 outputs = self.bert(input_values, attention_mask=attention_mask)

@@ -1,0 +1,52 @@
+method: 'grid'
+name: 'sharedencoder'
+metric: 
+    name: 'val_accuracy'
+    goal: 'maximize'   
+
+parameters: 
+    seed:
+      value: 0
+
+    model:
+      value: 'SharedEncoder'
+
+    data:
+      value: 'mosei'
+
+    # optimizer
+    lr: 
+      values: [5e-5, 3e-4, 1e-3]
+    weight_decay: 
+      value: 1e-5
+
+    # model hparams
+    modalities:
+      value: 3
+    n_classes:
+      value: 6
+    drop_out:
+      value: 0.5
+    marlin_dim:
+      value: 768
+    proj_dim:
+      value: 768
+    encoder_dim:
+      value: 256
+
+    # trainer hparams
+    batch_size:
+      value: 32
+    epoch:
+      value: 50
+    strategy:
+      value: 'ddp_find_unused_parameters_true' # 'ddp'
+    precision:
+      value: 16
+    
+
+    # checkpoint root dir
+    ckpt:
+      value: 'ckpt/mosei/sharedencoder'
+
+    

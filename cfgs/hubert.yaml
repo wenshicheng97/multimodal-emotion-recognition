@@ -34,7 +34,7 @@ parameters:
       value: 16
     
     epoch:
-      value: 1
+      value: 20
 
     ckpt:
       value: 'ckpt/hubert_mosei'

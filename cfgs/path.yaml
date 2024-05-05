@@ -5,14 +5,13 @@ dataset:
       ft: '/project/msoleyma_1026/cropped_face'
       lp: '/project/msoleyma_1026/marlin_face_base'
   mosei:
-    audio: '/home/tangyimi/emotion/data/mosei/audio_seg'
+    audio: '/project/msoleyma_1026/mosei_edit/audio_seg'
     video:
-      ft: '/home/tangyimi/emotion/data/mosei/video_seg'
+      ft: '/project/msoleyma_1026/mosei_edit/video_seg'
       lp: '/project/msoleyma_1026/mosei_edit/marlin_feat'
-    text: '/home/tangyimi/emotion/data/mosei/segmented_transcript.csv'
-    annotation: '/home/tangyimi/emotion/data/mosei/mosei_data.csv'
+    text: '/project/msoleyma_1026/mosei_edit/segmented_transcript.csv'
+    annotation: '/project/msoleyma_1026/mosei_edit/mosei_data.csv'
     
     annotation_openface: '/project/msoleyma_1026/mosei_edit/mosei_data_openface.csv'
     openface: '/project/msoleyma_1026/mosei_edit/MOSEI_openface'
     spectrogram: '/project/msoleyma_1026/mosei_edit/spectrogram'
-

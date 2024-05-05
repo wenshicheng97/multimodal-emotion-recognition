@@ -3,11 +3,11 @@ import lightning.pytorch as pl
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning import seed_everything
-from utils.dataset import get_dataloader
+from utils.shared_encoder_dataset import get_dataloader
 
 from utils.name import get_search_hparams, get_experiment_name
 
-from experiment.lightning_module import ExperimentModule
+from experiment.shared_encoder_module import ExperimentModule
 
 os.environ['WANDB_SILENT'] = 'true'
 
@@ -19,9 +19,7 @@ def train():
     seed_everything(hparams.seed)
 
     train_loader, val_loader, test_loader = get_dataloader(data=hparams.data, 
-                                                           batch_size=hparams.batch_size,
-                                                           fine_tune=hparams.fine_tune,
-                                                           lstm=args.lstm)
+                                                           batch_size=hparams.batch_size)
 
     model = ExperimentModule(**hparams)
 
@@ -59,13 +57,10 @@ def train():
     
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
     # trainer.validate(model, dataloaders=val_loader)
-    
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--experiment', '-e', type=str)
     parser.add_argument('--sweep_name', type=str)
-    parser.add_argument('--lstm', action='store_true', default=False)
 
     return parser.parse_args()
 
@@ -73,7 +68,7 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    with open(f'cfgs/{args.experiment}.yaml', 'r') as f:
+    with open(f'cfgs/sharedencoder.yaml', 'r') as f:
         sweep_config = yaml.safe_load(f)
 
     search_hparams = get_search_hparams(sweep_config)

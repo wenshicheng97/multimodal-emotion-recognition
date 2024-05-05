@@ -30,6 +30,9 @@ parameters:
       value: 'ddp_find_unused_parameters_true'
     precision:
       value: 32
+
+    proj_size:
+      value: null
     
     epoch:
       value: 20
