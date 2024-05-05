@@ -145,8 +145,6 @@ class MOSEI(MultimodalDataset):
         audio = audio_extraction(audio_path, self.audio_processor)
 
         text = text_tokenize(self.text_file, self.file_names[index], self.text_processor)
-        print(f'text shape: {text.shape}')
-        print(f'text: {text}')
         return audio, text, label
     
 
