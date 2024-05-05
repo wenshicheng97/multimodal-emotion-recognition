@@ -145,6 +145,8 @@ class MOSEI(MultimodalDataset):
         audio = audio_extraction(audio_path, self.audio_processor)
 
         text = text_tokenize(self.text_file, self.file_names[index], self.text_processor)
+        print(f'text shape: {text.shape}')
+        print(f'text: {text}')
         return audio, text, label
     
 
@@ -402,12 +404,10 @@ def get_dataloader(data, batch_size, fine_tune=False, lstm=False):
 
 
 if __name__ == '__main__':
-    train_loader, val_loader, test_loader = get_dataloader('mosei', 32, fine_tune=False, lstm=True)
+    train_loader, val_loader, test_loader = get_dataloader('mosei', 2, fine_tune=True, lstm=False)
     for batch in tqdm(train_loader):
-        print(batch['au17'].dtype)
-        print(batch['au18'].dtype)
-        print(batch['spectrogram'].shape)
-        print(batch['label'])
+        print(batch['text'].shape)
+        print(f'text batch: {batch["text"]}')
         break
     # df = pd.read_csv('/project/msoleyma_1026/mosei_edit/mosei_label_common.csv')
     # openface_dir = '/project/msoleyma_1026/mosei_edit/MOSEI_openface'

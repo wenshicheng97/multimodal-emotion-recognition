@@ -10,7 +10,7 @@ parameters:
     model:
       value: 'EarlyFusion'
     data:
-      value: 'cremad'
+      value: 'mosei'
 
     # optimizer
     lr: 
@@ -20,7 +20,7 @@ parameters:
 
     # model parameters
     n_classes:
-      value: 6
+      value: 7
     input_size:
       value: 512
     hidden_size:
@@ -33,7 +33,7 @@ parameters:
       value: 'marlin_vit_base_ytf'
 
     batch_size:
-      value: 2
+      value: 4
     strategy:
       value: 'ddp_find_unused_parameters_true'
     precision:
