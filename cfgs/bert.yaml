@@ -20,9 +20,11 @@ parameters:
   
     # bert parameters
     n_classes:
-      value: 7
+      value: 6
+    proj_size:
+      value: null
     fine_tune:
-      values: [True, False]
+      value: True
 
     batch_size:
       value: 32
@@ -38,5 +40,5 @@ parameters:
       value: 20
 
     ckpt:
-      value: 'ckpt/bert'
+      value: 'ckpt/bert/test'
 

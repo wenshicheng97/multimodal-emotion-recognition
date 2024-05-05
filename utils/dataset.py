@@ -400,15 +400,9 @@ def get_dataloader(data, batch_size, fine_tune=False, lstm=False):
     return train_loader, val_loader, test_loader
 
 
-if __name__ == '__main__':
-    train_loader, val_loader, test_loader = get_dataloader('mosei', 2, fine_tune=False, lstm=False)
-    for batch in tqdm(train_loader):
-        # print(batch['au17'].shape)
-        # print(batch['au18'].shape)
-        #print(batch['spectrogram'].shape)
-        print(batch['text'].shape)
-        break
-    # train_loader, val_loader, test_loader = get_dataloader('mosei', 5, fine_tune=False)
+# if __name__ == '__main__':
+    # train_loader, val_loader, test_loader = get_dataloader('mosei', 2, fine_tune=True, lstm=False)
+
     # for batch in tqdm(train_loader):
     #     print(batch['text'].shape)
     #     print(f'text batch: {batch["text"]}')
