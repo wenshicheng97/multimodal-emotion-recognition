@@ -20,7 +20,7 @@ parameters:
 
     # model parameters
     n_classes:
-      value: 7
+      value: 6
     input_size:
       value: 768
     hidden_size:

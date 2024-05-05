@@ -126,7 +126,7 @@ class MOSEI(MultimodalDataset):
                  text_file: str,
                  annotation_file: str,
                  audio_pretrained="facebook/hubert-large-ls960-ft",
-                 text_pretrained="bert-base-uncased"):
+                 text_pretrained="bert-base-cased"):
         super().__init__(video_dir, audio_dir, audio_pretrained)
         annotations = pd.read_csv(annotation_file, dtype={'name': str})
         self.file_names = annotations['name'].values.tolist()
@@ -401,7 +401,7 @@ def get_dataloader(data, batch_size, fine_tune=False, lstm=False):
 
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # train_loader, val_loader, test_loader = get_dataloader('mosei', 2, fine_tune=True, lstm=False)
     # for batch in tqdm(train_loader):
     #     print(batch['text'].shape)
