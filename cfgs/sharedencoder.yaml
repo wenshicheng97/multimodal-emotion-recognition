@@ -16,7 +16,7 @@ parameters:
 
     # optimizer
     lr: 
-      values: [5e-5, 3e-4, 1e-3]
+      values: [3e-4, 5e-5, 1e-3]
     weight_decay: 
       value: 1e-5
 
