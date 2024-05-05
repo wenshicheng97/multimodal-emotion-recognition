@@ -10,8 +10,9 @@ dataset:
       ft: '/home/tangyimi/emotion/data/mosei/video_seg'
       lp: '/project/msoleyma_1026/mosei_edit/marlin_feat'
     text: '/home/tangyimi/emotion/data/mosei/segmented_transcript.csv'
-    annotation: '/home/tangyimi/emotion/data/mosei/mosei_label_common.csv'
-    annotation_openface: '/project/msoleyma_1026/mosei_edit/mosei_label_openface.csv'
+    annotation: '/home/tangyimi/emotion/data/mosei/mosei_data.csv'
+    
+    annotation_openface: '/project/msoleyma_1026/mosei_edit/mosei_data_openface.csv'
     openface: '/project/msoleyma_1026/mosei_edit/MOSEI_openface'
     spectrogram: '/project/msoleyma_1026/mosei_edit/spectrogram'
 

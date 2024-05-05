@@ -402,18 +402,30 @@ def get_dataloader(data, batch_size, fine_tune=False, lstm=False):
 
 
 if __name__ == '__main__':
-    train_loader, val_loader, test_loader = get_dataloader('mosei', 2, fine_tune=True, lstm=False)
-    for batch in tqdm(train_loader):
-        print(batch['text'].shape)
-        print(f'text batch: {batch["text"]}')
-        break
-    # df = pd.read_csv('/project/msoleyma_1026/mosei_edit/mosei_label_common.csv')
+    # train_loader, val_loader, test_loader = get_dataloader('mosei', 2, fine_tune=True, lstm=False)
+    # for batch in tqdm(train_loader):
+    #     print(batch['text'].shape)
+    #     print(f'text batch: {batch["text"]}')
+    #     break
+    # df = pd.read_csv('/project/msoleyma_1026/mosei_edit/mosei_data.csv')
     # openface_dir = '/project/msoleyma_1026/mosei_edit/MOSEI_openface'
     # print(len(df))
     # df['file_exists'] = df['name'].apply(lambda x: os.path.exists(os.path.join(openface_dir, f'{x}.csv')))
     # filtered_df = df[df['file_exists']]
+
     # # write to csv
-    # filtered_df.to_csv('/project/msoleyma_1026/mosei_edit/mosei_label_openface.csv', index=False)
-    # filtered_df = pd.read_csv('/project/msoleyma_1026/mosei_edit/mosei_label_openface.csv')
+    # filtered_df.to_csv('/project/msoleyma_1026/mosei_edit/mosei_data_openface.csv', index=False)
+    # filtered_df = pd.read_csv('/project/msoleyma_1026/mosei_edit/mosei_data_openface.csv')
     # print(len(filtered_df))
+
+    # df = pd.read_csv('/project/msoleyma_1026/mosei_edit/mosei_label_common.csv')
+    # print(len(df))
+    # df['file_exists'] = df['label'].apply(lambda x: x!=0)
+    # filtered_df = df[df['file_exists']]
+    # filtered_df['label'] = filtered_df['label'].apply(lambda x: x-1)
+    # # # write to csv
+    # filtered_df.to_csv('/project/msoleyma_1026/mosei_edit/mosei_data.csv', index=False)
+    # filtered_df = pd.read_csv('/project/msoleyma_1026/mosei_edit/mosei_data.csv')
+    # print(len(filtered_df))
+    # print(filtered_df['label'].value_counts())
 
