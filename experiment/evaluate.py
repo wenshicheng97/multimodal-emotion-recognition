@@ -1,5 +1,5 @@
 import torch, argparse
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
 from utils.dataset import get_dataloader
 from lightning import seed_everything
 from tqdm import tqdm
@@ -44,15 +44,16 @@ def evalute_f1(model_path, seed, data, fine_tune, shared, average='micro'):
             if shared:
                 output = model(batch)
                 y = output.label
-                y_hat = output.multimodal_logits
+                y_hat = output.logits
             else:
                 y, y_hat = model(batch)
             y_true.extend(y.cpu().numpy())
             y_pred.extend(y_hat.argmax(dim=1).cpu().numpy())
 
     f1 = f1_score(y_true, y_pred, average=average)
+    accuarcy = accuracy_score(y_true, y_pred)
 
-    print(f'Model {type(model.model).__name__} F1 score ({average}) on {data}: {f1}')
+    print(f'Model {type(model.model).__name__} ft={fine_tune} F1 score ({average}) on {data}: {f1} Accuracy: {accuarcy}')
 
 
 if __name__ == '__main__':
