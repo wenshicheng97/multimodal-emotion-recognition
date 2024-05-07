@@ -68,7 +68,6 @@ class GeneralizedGatedMultimodalUnit(nn.Module):
     def forward(self, *inputs):
         assert len(inputs) == self.modalities, "Number of inputs must match number of modalities"
         
-
         # Concatenate gate
         all_input = torch.cat(inputs, dim=1)
         transformed = [self.fc_transform[i](inputs[i]) for i in range(self.modalities)]

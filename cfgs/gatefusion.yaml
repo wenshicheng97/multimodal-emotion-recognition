@@ -16,7 +16,7 @@ parameters:
 
     # optimizer
     lr: 
-      value: 5e-5
+      values: [5e-5, 3e-4]
     weight_decay: 
       value: 1e-5
 
@@ -24,9 +24,9 @@ parameters:
     dim_out:
       value: 256
     n_classes:
-      value: 7
+      value: 6
     input_size:
-      value: 512
+      value: 768
     hidden_size:
       value: 256
     proj_size:
@@ -38,7 +38,7 @@ parameters:
 
     # trainer hparams
     batch_size:
-      value: 2
+      value: 4
     epoch:
       value: 20
     strategy:
@@ -49,6 +49,6 @@ parameters:
 
     # checkpoint root dir
     ckpt:
-      value: 'ckpt/mosei/gated_fusion_tanh_skip_0'
+      value: 'ckpt/mosei/gated_fusion_v2/'
 
     

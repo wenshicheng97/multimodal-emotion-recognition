@@ -55,8 +55,9 @@ class MarlinForClassification(nn.Module):
         self.marlin = MarlinModel(kwargs['fine_tune'], 
                                 kwargs['proj_size'], 
                                 kwargs['marlin_model'])
+        input_size = kwargs['proj_size'] if kwargs['proj_size'] else MarlinModel.EMDED_DIM[kwargs['marlin_model']]
         self.fc = nn.Sequential(
-            nn.Linear(self.marlin.EMDED_DIM[self.marlin.marlin_model], kwargs['hidden_size']),
+            nn.Linear(input_size, kwargs['hidden_size']),
             nn.ReLU(),
             nn.Linear(kwargs['hidden_size'], kwargs['n_classes'])
         )
