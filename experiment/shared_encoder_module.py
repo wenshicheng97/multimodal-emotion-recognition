@@ -22,52 +22,57 @@ class ExperimentModule(LightningModule):
         self.lr = kwargs['lr']
         self.weight_decay = kwargs['weight_decay']
         self.n_classes = kwargs['n_classes']
+        self.use_text = (kwargs['data'] == 'mosei')
 
         self.model = SharedEncoder(**kwargs)
 
+        self.automatic_optimization = False
 
-    def forward(self, batch):
-        return self.model(batch)
-    
+
+    def forward(self, batch, mode='multimodal'):
+        return self.model(batch, mode)
+
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), 
-                                     lr=self.lr, 
-                                     weight_decay=self.weight_decay)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
-                                                               T_max=self.trainer.max_epochs) 
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.trainer.max_epochs)
         return [optimizer], [scheduler]
 
     def training_step(self, batch, batch_idx):
-        output = self(batch)
-        loss = output.loss
-        self.log('train_loss/total_loss', loss, on_epoch=True, sync_dist=True, batch_size=batch['label'].size(0))
-        self.log('train_loss/multimodal_loss', output.multimodal_loss, on_epoch=True, sync_dist=True)
-        self.log('train_loss/audio_loss', output.audio_loss, on_epoch=True, sync_dist=True)
-        self.log('train_loss/video_loss', output.video_loss, on_epoch=True, sync_dist=True)
-        self.log('train_loss/text_loss', output.text_loss, on_epoch=True, sync_dist=True)
-        return loss
+        # Train for each mode sequentially with their respective losses
+        modes = ['audio', 'video', 'text'] if self.use_text else ['audio', 'video']
+        losses = {}
 
+        for mode in modes:
+            output = self.forward(batch, mode)
+            loss = output.loss
+            self.log(f'train_loss/{mode}_loss', loss, on_step=False, on_epoch=True, sync_dist=True)
+            losses[mode] = loss
+            self.manual_backward(loss)
+            self.optimizers().step()
+            self.optimizers().zero_grad()
+
+        with self.model.train_mode(mode='multimodal'):
+            multimodal_output = self.forward(batch, 'multimodal')
+            multimodal_loss = multimodal_output.loss
+            self.log('train_loss/multimodal_loss', multimodal_loss, on_step=False, on_epoch=True, sync_dist=True)
+            losses['multimodal'] = multimodal_loss
+            self.manual_backward(multimodal_loss)
+            self.optimizers().step()
+            self.optimizers().zero_grad()
+
+        total_loss = sum(losses.values())
+        self.log('train_loss/total_loss', total_loss, on_step=False, on_epoch=True, sync_dist=True)
+        return total_loss
+    
     def on_validation_start(self):
         self.val_accuracy = Accuracy(task="multiclass", num_classes=self.n_classes).to(self.device)
-        # self.audio_accuracy = Accuracy(task="multiclass", num_classes=self.n_classes).to(self.device)
-        # self.video_accuracy = Accuracy(task="multiclass", num_classes=self.n_classes).to(self.device)
-        # self.text_accuracy = Accuracy(task="multiclass", num_classes=self.n_classes).to(self.device)
 
     def validation_step(self, batch, batch_idx):
-        output = self(batch)
+        output = self.forward(batch, 'multimodal')
         real = output.label
-        pred = output.multimodal_logits
-        # pred_audio = output.audio_logits
-        # pred_video = output.video_logits
-        # pred_text = output.text_logits
+        pred = output.logits
         self.val_accuracy.update(pred, real)
-        # self.audio_accuracy.update(pred_audio, real)
-        # self.video_accuracy.update(pred_video, real)
-        # self.text_accuracy.update(pred_text, real)
-
 
     def on_validation_epoch_end(self):
         self.log('val_accuracy', self.val_accuracy.compute(), on_epoch=True, sync_dist=True)
-        # self.log('audio_accuracy', self.audio_accuracy.compute(), on_epoch=True, sync_dist=True)
-        # self.log('video_accuracy', self.video_accuracy.compute(), on_epoch=True, sync_dist=True)
-        # self.log('text_accuracy', self.text_accuracy.compute(), on_epoch=True, sync_dist=True)
+        self.val_accuracy.reset()

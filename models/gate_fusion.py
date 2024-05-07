@@ -60,25 +60,37 @@ class GeneralizedGatedMultimodalUnit(nn.Module):
         super().__init__()
         self.modalities = len(dims)
         self.fc_transform = nn.ModuleList([nn.Linear(dim, dim_out) for dim in dims])
-        self.fc_gates = nn.ModuleList([nn.Linear(dim, dim_out) for dim in dims])
+        # self.fc_gates = nn.ModuleList([nn.Linear(dim, dim_out) for dim in dims])
+        self.fc_gates = nn.ModuleList([nn.Linear(dim * self.modalities, dim_out) for dim in dims])
         self.epsilon = 1e-8
         self.layer_norm = nn.LayerNorm(dim_out)
 
     def forward(self, *inputs):
         assert len(inputs) == self.modalities, "Number of inputs must match number of modalities"
         
-        # transformed = [self.fc_transform[i](inputs[i]) for i in range(self.modalities)]
-        transformed = [torch.tanh(self.fc_transform[i](inputs[i])) for i in range(self.modalities)]
-        gates = [torch.sigmoid(self.fc_gates[i](inputs[i])) for i in range(self.modalities)]
 
+        # Concatenate gate
+        all_input = torch.cat(inputs, dim=1)
+        transformed = [self.fc_transform[i](inputs[i]) for i in range(self.modalities)]
+        activated = [torch.tanh(transformed[i]) for i in range(self.modalities)]
+        gates = [torch.sigmoid(self.fc_gates[i](all_input)) for i in range(self.modalities)]
         total_gates = torch.stack(gates, dim=0).sum(dim=0)
         normalized_gates = [gate / total_gates for gate in gates]
-
-        fused_output = torch.stack([normalized_gates[i] * transformed[i] for i in range(self.modalities)], dim=0).sum(dim=0)
+        fused_output = torch.stack([normalized_gates[i] * activated[i] for i in range(self.modalities)], dim=0).sum(dim=0)
         skip_connection = torch.stack(transformed, dim=0).mean(dim=0)
         combined_output = fused_output + skip_connection
-        
         final_output = self.layer_norm(combined_output)
+
+        # Single gate
+        # transformed = [self.fc_transform[i](inputs[i]) for i in range(self.modalities)]
+        # activated = [torch.tanh(transformed[i]) for i in range(self.modalities)]
+        # gates = [torch.sigmoid(self.fc_gates[i](inputs[i])) for i in range(self.modalities)]
+        # total_gates = torch.stack(gates, dim=0).sum(dim=0)
+        # normalized_gates = [gate / total_gates for gate in gates]
+        # fused_output = torch.stack([normalized_gates[i] * activated[i] for i in range(self.modalities)], dim=0).sum(dim=0)
+        # skip_connection = torch.stack(transformed, dim=0).mean(dim=0)
+        # combined_output = fused_output + skip_connection
+        # final_output = self.layer_norm(combined_output)
         
         return final_output
     
